@@ -39,3 +39,6 @@
    ```bash
    npm run web
    ```
+   
+# Install the latest Android APK build [here](https://expo.dev/accounts/bibek2442b/projects/WaterSampler/builds/a754d6fa-4077-4ffb-b777-02c66f6c9eb6)
+
