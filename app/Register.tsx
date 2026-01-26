@@ -1,4 +1,4 @@
-import {Text, StyleSheet, TextInput, TouchableOpacity, ActivityIndicator} from "react-native";
+import {Text, StyleSheet, TextInput, TouchableOpacity, ActivityIndicator, View} from "react-native";
 // import {MaterialCommunityIcons} from "@expo/vector-icons";
 import {useEffect, useState} from "react";
 import {SafeAreaProvider, SafeAreaView} from "react-native-safe-area-context";
@@ -7,11 +7,14 @@ import {auth, db} from "@/firebase.config";
 import {createUserWithEmailAndPassword, sendEmailVerification, User} from "firebase/auth";
 import {doc, setDoc} from "firebase/firestore";
 import {Link} from "expo-router";
+import Ionicons from '@expo/vector-icons/Ionicons';
 
 export default function Register() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [repeatPassword, setRepeatPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [showRepeatPassword, setShowRepeatPassword] = useState(false);
   const [registerSuccess, setRegisterSuccess] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
   const [loading, setLoading] = useState(false);
@@ -92,33 +95,48 @@ export default function Register() {
         {errorMsg&& <Text style={{color: 'red'}}>{errorMsg}</Text> }
         {registerSuccess && <Text style={{color: 'green'}}>Registration Successful</Text>}
         <Text style={styles.text}>Email</Text>
-        <TextInput
-          style={styles.input}
-          keyboardType="email-address"
-          autoCapitalize="none"
-          placeholder={"Enter your email address "}
-          placeholderTextColor={"gray"}
-          value={email}
-          onChangeText={setEmail}
-        />
+        <View style={styles.inputContainer}>
+          <Ionicons name="person-outline" size={20} color="gray" style={styles.inputIcon} />
+          <TextInput
+            style={styles.input}
+            keyboardType="email-address"
+            autoCapitalize="none"
+            placeholder={"Enter your email address "}
+            placeholderTextColor={"gray"}
+            value={email}
+            onChangeText={setEmail}
+          />
+        </View>
         <Text style={styles.text}>Password</Text>
-        <TextInput
-          style={styles.input}
-          secureTextEntry={true}
-          placeholder={"Enter your password "}
-          placeholderTextColor={"gray"}
-          value={password}
-          onChangeText={setPassword}
-        />
+        <View style={styles.inputContainer}>
+          <Ionicons name="lock-closed-outline" size={20} color="gray" style={styles.inputIcon} />
+          <TextInput
+            style={styles.input}
+            secureTextEntry={!showPassword}
+            placeholder={"Enter your password "}
+            placeholderTextColor={"gray"}
+            value={password}
+            onChangeText={setPassword}
+          />
+          <TouchableOpacity onPress={() => setShowPassword(s => !s)} style={styles.inputRightTouchable}>
+            <Ionicons name={showPassword ? "eye-off" : "eye"} size={20} color="gray" style={styles.inputIconRight} />
+          </TouchableOpacity>
+        </View>
         <Text style={styles.text}>Repeat Password</Text>
-        <TextInput
-          style={styles.input}
-          secureTextEntry={true}
-          placeholder={"Confrim Password"}
-          placeholderTextColor={"gray"}
-          value={repeatPassword}
-          onChangeText={setRepeatPassword}
-        />
+        <View style={styles.inputContainer}>
+          <Ionicons name="lock-closed-outline" size={20} color="gray" style={styles.inputIcon} />
+          <TextInput
+            style={styles.input}
+            secureTextEntry={!showRepeatPassword}
+            placeholder={"Confirm Password"}
+            placeholderTextColor={"gray"}
+            value={repeatPassword}
+            onChangeText={setRepeatPassword}
+          />
+          <TouchableOpacity onPress={() => setShowRepeatPassword(s => !s)} style={styles.inputRightTouchable}>
+            <Ionicons name={showRepeatPassword ? "eye-off" : "eye"} size={20} color="gray" style={styles.inputIconRight} />
+          </TouchableOpacity>
+        </View>
         {loading?
           <ActivityIndicator size="large"/>
           :
@@ -154,13 +172,29 @@ const styles = StyleSheet.create({
     fontSize: 20,
   },
   input:{
+    flex: 1,
+    height: 50,
+    paddingLeft: 8,
+  },
+  inputContainer: {
     width: '80%',
+    flexDirection: 'row',
+    alignItems: 'center',
     height: 50,
     borderWidth: 2,
-    borderColor: "black",
+    borderColor: 'black',
     marginBottom: 20,
     borderRadius: 20,
-    padding: 10,
+    paddingHorizontal: 10,
+  },
+  inputIcon: {
+    marginRight: 8,
+  },
+  inputRightTouchable: {
+    padding: 6,
+  },
+  inputIconRight: {
+    marginLeft: 8,
   },
   button:{
     width: '80%',

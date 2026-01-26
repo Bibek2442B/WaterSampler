@@ -1,15 +1,19 @@
-import {Text, StyleSheet, TextInput, TouchableOpacity, ActivityIndicator} from "react-native";
+import {Text, StyleSheet, TextInput, TouchableOpacity, ActivityIndicator, View, Image} from "react-native";
 import {useEffect, useState} from "react";
 import {SafeAreaProvider, SafeAreaView} from "react-native-safe-area-context";
+import { LinearGradient } from 'expo-linear-gradient';
 import {sendPasswordResetEmail, signInWithEmailAndPassword, User} from "firebase/auth";
 // @ts-ignore
 import {auth} from "@/firebase.config";
 import {Link} from "expo-router";
+import Ionicons from '@expo/vector-icons/Ionicons';
+
 
 
 export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [user, setUser] = useState<User | null>(null);
@@ -98,49 +102,66 @@ export default function Login() {
   // @ts-ignore
   return(
     <SafeAreaProvider>
-      <SafeAreaView style={styles.container}>
+      <SafeAreaView style={{flex: 1}}>
+        <LinearGradient
+          colors={["#59667E", "#D4E3FF", "#858E9F"]}
+          start={[0.5, 0]}
+          end={[0.5, 1]}
+          locations={[0.11, 0.53, 0.92]}
+          style={styles.container}
+        >
+        {/* <Image source={require('../assets/images/aguadonorte.png')} style={styles.image} /> */}
         <Text style={[styles.loginText,{color: 'red'}]}>Water Sampler</Text>
-        <Text style={styles.loginText}>Login</Text>
-        {error && <Text style={{color: 'red'}}>{error}</Text>}
+          <Text style={styles.loginText}>Login</Text>
+          {error && <Text style={{color: 'red'}}>{error}</Text>}
 
-        <Text style={styles.text}>Email</Text>
-        <TextInput
-          style={styles.input}
-          keyboardType="email-address"
-          autoCapitalize="none"
-          placeholder={"Enter your email address "}
-          placeholderTextColor={"gray"}
-          value={email}
-          onChangeText={setEmail}
-        />
-        <Text style={styles.text}> Password</Text>
-        <TextInput
-          style={styles.input}
-          secureTextEntry={true}
-          placeholder={"Enter your password "}
-          placeholderTextColor={"gray"}
-          value={password}
-          onChangeText={setPassword}
-        />
-        {
-          loading? (
-            <ActivityIndicator size="large" />
-          ) :(
-            <>
-              <TouchableOpacity
-                style={styles.button}
-                onPress={handleLoginButton}
-              >
-                <Text style={styles.text}>Login</Text>
-              </TouchableOpacity>
-              <Text style={styles.text}>Not Registered Yet?</Text>
-              <Link href={"/Register"}><Text style={[styles.text, styles.link]}>Register</Text></Link>
-              <Text style={styles.text}>Forgot Password</Text>
-              <TouchableOpacity onPress={handlePasswordReset}><Text style={[styles.text, styles.link]}>Reset Password</Text></TouchableOpacity>
-            </>
-          )
-        }
-        {error==='Please verify your email address' && <Text style={{color: 'red'}}>Please verify your email address</Text>}
+          <Text style={styles.text}>Email</Text>
+          <View style={styles.inputContainer}>
+            <Ionicons name="person-outline" size={20} color="gray" style={styles.inputIcon} />
+            <TextInput
+              style={styles.input}
+              keyboardType="email-address"
+              autoCapitalize="none"
+              placeholder={"Enter your email address "}
+              placeholderTextColor={"gray"}
+              value={email}
+              onChangeText={setEmail}
+            />
+          </View>
+          <Text style={styles.text}> Password</Text>
+          <View style={styles.inputContainer}>
+            <Ionicons name="lock-closed-outline" size={20} color="gray" style={styles.inputIcon} />
+            <TextInput
+              style={styles.input}
+              secureTextEntry={!showPassword}
+              placeholder={"Enter your password "}
+              placeholderTextColor={"gray"}
+              value={password}
+              onChangeText={setPassword}
+            />
+            <TouchableOpacity onPress={() => setShowPassword(s => !s)} style={styles.inputRightTouchable}>
+              <Ionicons name={showPassword ? "eye-off" : "eye"} size={20} color="gray" style={styles.inputIconRight} />
+            </TouchableOpacity>
+          </View>
+          {
+            loading? (
+              <ActivityIndicator size="large" />
+            ) :(
+              <>
+                <TouchableOpacity
+                  style={styles.button}
+                  onPress={handleLoginButton}
+                >
+                  <Text style={styles.text}>Login</Text>
+                </TouchableOpacity>
+                <Text style={styles.text}>Not Registered Yet?</Text>
+                <Link href={"/Register"}><Text style={[styles.text, styles.link]}>Register</Text></Link>
+                <Text style={styles.text}>Forgot Password</Text>
+                <TouchableOpacity onPress={handlePasswordReset}><Text style={[styles.text, styles.link]}>Reset Password</Text></TouchableOpacity>
+              </>
+            )
+          }
+        </LinearGradient>
       </SafeAreaView>
     </SafeAreaProvider>
 
@@ -149,6 +170,7 @@ export default function Login() {
 
 const styles = StyleSheet.create({
   container:{
+    flex: 1,
     padding: 20,
     justifyContent: "center",
     alignItems: "center",
@@ -162,13 +184,29 @@ const styles = StyleSheet.create({
     fontSize: 20,
   },
   input:{
+    flex: 1,
+    height: 50,
+    paddingLeft: 8,
+  },
+  inputContainer: {
     width: '80%',
+    flexDirection: 'row',
+    alignItems: 'center',
     height: 50,
     borderWidth: 2,
-    borderColor: "black",
+    borderColor: 'black',
     marginBottom: 20,
     borderRadius: 20,
-    padding: 10,
+    paddingHorizontal: 10,
+  },
+  inputIcon: {
+    marginRight: 8,
+  },
+  inputRightTouchable: {
+    padding: 6,
+  },
+  inputIconRight: {
+    marginLeft: 8,
   },
   button:{
     width: '80%',
@@ -197,6 +235,7 @@ const styles = StyleSheet.create({
   },
   link:{
     color: "blue",
-  }
+  },
+
 });
 

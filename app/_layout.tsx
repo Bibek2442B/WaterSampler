@@ -5,6 +5,7 @@ import {User} from "firebase/auth";
 import {auth} from "@/firebase.config";
 import {ActivityIndicator, View} from "react-native";
 
+
 export default function RootLayout() {
   const [initializing, setInitializing] = useState(true);
   const [user, setUser] = useState<User | null>(null);
@@ -47,6 +48,7 @@ export default function RootLayout() {
 
   return (
     <Stack>
+      {/* <Stack.Screen name={"test"} options={{headerShown: false}}/> */}
       <Stack.Screen name={"Login"} options={{headerShown: false}}/>
       <Stack.Screen name={"Register"} options={{headerShown: false}}/>
       <Stack.Screen name={"(tabs)"} options={{headerShown: false}}/>
