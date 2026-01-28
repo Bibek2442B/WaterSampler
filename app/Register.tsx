@@ -19,6 +19,7 @@ export default function Register() {
   const [errorMsg, setErrorMsg] = useState("");
   const [loading, setLoading] = useState(false);
   const [user, setUser] = useState<User | null>(null);
+
   useEffect(() => {
     setRegisterSuccess(false);
     setErrorMsg("");
@@ -35,7 +36,7 @@ export default function Register() {
     }
     const user={
       email: email,
-      role: "user",
+      role: "viewer",
     }
     try {
       setLoading(true);

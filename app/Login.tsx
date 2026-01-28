@@ -4,11 +4,10 @@ import {SafeAreaProvider, SafeAreaView} from "react-native-safe-area-context";
 import { LinearGradient } from 'expo-linear-gradient';
 import {sendPasswordResetEmail, signInWithEmailAndPassword, User} from "firebase/auth";
 // @ts-ignore
-import {auth} from "@/firebase.config";
+import {auth, db} from "@/firebase.config";
 import {Link} from "expo-router";
 import Ionicons from '@expo/vector-icons/Ionicons';
-
-
+import {doc, getDoc} from "firebase/firestore";
 
 export default function Login() {
   const [email, setEmail] = useState("");
@@ -17,6 +16,7 @@ export default function Login() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [user, setUser] = useState<User | null>(null);
+  const [userRole, setUserRole] = useState<string>('');
 
   useEffect(() => {
     setError('');
@@ -67,9 +67,27 @@ export default function Login() {
         setLoading(false);
         return;
       }
-      setUser(userCredentials.user);
-      setEmail('');
-      setPassword('');
+
+      // fetch user role from firestore
+      const uid = userCredentials.user.uid;
+      const userDoc = await getDoc(doc(db, "users", uid));
+
+      if (userDoc.exists()) {
+        const userData = userDoc.data();
+        const role = userData.role || 'viewer';
+        setUserRole(role);
+
+        const roleDisplay = role.charAt(0).toUpperCase() + role.slice(1);
+        alert(`Logged in as ${roleDisplay}`);
+
+        setUser(userCredentials.user);
+        setEmail('');
+        setPassword('');
+      } else {
+        setError('User data not found');
+        // @ts-ignore
+        await auth.signOut();
+      }
     }catch (error) {
       //@ts-ignore
       switch (error.code) {
