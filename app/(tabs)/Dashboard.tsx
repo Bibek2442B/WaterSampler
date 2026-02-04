@@ -1,13 +1,15 @@
-import {StyleSheet, View, Text, TouchableOpacity} from "react-native";
+import {StyleSheet, Text, TouchableOpacity} from "react-native";
 //@ts-ignore
 import {auth} from "@/firebase.config";
 import {SafeAreaProvider, SafeAreaView} from "react-native-safe-area-context";
+import {Link} from "expo-router";
 
 export default function Dashboard(){
   const handleLogoutButton=async ()=>{
     //@ts-ignore
     await auth.signOut();
   }
+
   return (
     <SafeAreaProvider>
     <SafeAreaView style={styles.container}>
@@ -18,6 +20,12 @@ export default function Dashboard(){
       >
         <Text style={styles.text}>Logout</Text>
       </TouchableOpacity>
+      <Link
+        style={styles.button}
+        href={"/AddNewSampler"}
+      >
+        Add New Sampler
+      </Link>
     </SafeAreaView>
     </SafeAreaProvider>
 
