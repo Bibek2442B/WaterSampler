@@ -34,9 +34,9 @@ export default function Users() {
       const snapshot = await getDocs(collection(db, "users"));
       const list: UserType[] = [];
       snapshot.forEach((docSnap) => {
-        // if(docSnap.data().role.toLowerCase() !== "admin"){
+        if(docSnap.data().role.toLowerCase() !== "admin"){
           list.push({ uid: docSnap.id, ...docSnap.data() } as UserType);
-        // }
+        }
       });
       setUsers(list);
     } catch (err) {

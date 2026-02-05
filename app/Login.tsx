@@ -60,6 +60,7 @@ export default function Login() {
     try{
       // @ts-ignore
       const userCredentials = await signInWithEmailAndPassword(auth, email, password);
+      console.log("Email verified:", userCredentials.user.emailVerified);
       if(!userCredentials.user.emailVerified){
         // @ts-ignore
         await auth.signOut();
@@ -78,7 +79,6 @@ export default function Login() {
         setUserRole(role);
 
         const roleDisplay = role.charAt(0).toUpperCase() + role.slice(1);
-        alert(`Logged in as ${roleDisplay}`);
 
         setUser(userCredentials.user);
         setEmail('');
