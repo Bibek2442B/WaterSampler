@@ -12,6 +12,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { addDoc, collection, serverTimestamp } from "firebase/firestore";
 // @ts-ignore
 import { db } from "@/firebase.config";
+import {router} from "expo-router";
 
 export default function AddWaterSampler() {
   const [name, setName] = useState("");
@@ -38,10 +39,11 @@ export default function AddWaterSampler() {
 
       Alert.alert("Success", "Water sampler created successfully");
 
-      // Reset form
       setName("");
       setAddress("");
       setPhone("");
+      // @ts-ignore
+      router.replace("/WaterSamplerList");
     } catch (error) {
       console.error("Error creating sampler:", error);
       Alert.alert("Error", "Failed to create water sampler");
