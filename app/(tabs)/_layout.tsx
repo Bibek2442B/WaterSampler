@@ -6,6 +6,7 @@ export default function TabsLayout(){
     <Tabs>
       <Tabs.Screen name={"Dashboard"} options={{headerShown: false}} />
       <Tabs.Screen name={"AddNewSampler"} options={{headerShown: false}}/>
+      <Tabs.Screen name={"WaterSamplerList"} options={{headerShown: false}}/>
     </Tabs>
   );
 }

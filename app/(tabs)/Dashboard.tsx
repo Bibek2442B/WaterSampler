@@ -26,6 +26,12 @@ export default function Dashboard(){
       >
         Add New Sampler
       </Link>
+      <Link
+        style={styles.button}
+        href={"/WaterSamplerList"}
+      >
+        Water Sampler List
+      </Link>
     </SafeAreaView>
     </SafeAreaProvider>
 
