@@ -1,4 +1,5 @@
 import {Tabs} from "expo-router";
+import {Ionicons} from "@expo/vector-icons";
 
 export default function TabsLayout(){
 
@@ -14,12 +15,16 @@ export default function TabsLayout(){
         paddingRight: 20,
       }
     }}>
-      <Tabs.Screen name={"Dashboard"} options={{headerShown: false}} />
-      <Tabs.Screen name={"AddNewSampler"} options={{headerShown: false}}/>
       <Tabs.Screen name={"WaterSamplerList"} options={{
         title: "Water Samplers",
-
       }}/>
+      <Tabs.Screen
+          name={"Profile"}
+          options={{
+            title: "Profile",
+            headerTitleAlign: "center",
+          }}
+      />
     </Tabs>
   );
 }

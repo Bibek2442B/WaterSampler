@@ -31,7 +31,7 @@ export default function RootLayout() {
     if(initializing) return;
     const inTabsDir = segments[0]==='(tabs)';
     if(user && !inTabsDir){
-      router.replace('/(tabs)/Dashboard');
+      router.replace('/(tabs)/WaterSamplerList');
     }
     else if(!user && inTabsDir){
       router.replace('/');
