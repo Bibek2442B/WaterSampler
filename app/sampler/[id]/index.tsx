@@ -3,6 +3,7 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "@/firebase.config";
 import { useEffect, useState } from "react";
+import { useNavigation } from "@react-navigation/native";
 
 type Sampler = {
   name: string;
@@ -17,6 +18,8 @@ export default function SamplerDetails() {
   const router = useRouter();
   const [sampler, setSampler] = useState<Sampler | null>(null);
 
+  const navigation = useNavigation();
+
   useEffect(() => {
     const fetchSampler = async () => {
       if (!id) return;
@@ -25,10 +28,17 @@ export default function SamplerDetails() {
       if (snap.exists()) {
         setSampler(snap.data() as Sampler);
       }
+
     };
 
     fetchSampler();
+
   }, [id]);
+  useEffect(()=>{
+    navigation.setOptions({
+      headerTitle: sampler?.name || "Water Sampler",
+    })
+  },[sampler])
 
   if (!sampler) {
     return <Text style={{ padding: 20 }}>Loading...</Text>;
@@ -36,7 +46,6 @@ export default function SamplerDetails() {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>{sampler.name}</Text>
 
       <Text>Status: {sampler.status}</Text>
       <Text>Phone: {sampler.phone}</Text>

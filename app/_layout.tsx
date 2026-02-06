@@ -4,6 +4,7 @@ import {User} from "firebase/auth";
 // @ts-ignore
 import {auth} from "@/firebase.config";
 import {ActivityIndicator, View} from "react-native";
+import Login from "@/app/Login";
 
 
 export default function RootLayout() {
@@ -16,7 +17,7 @@ export default function RootLayout() {
   const onAuthStateChange=(thisUser: User | null) => {
 
     setUser(thisUser);
-    console.log(user);
+    // console.log(user);
     setInitializing(false);
   }
 
@@ -47,12 +48,18 @@ export default function RootLayout() {
   }
 
   return (
-    <Stack>
+    <Stack screenOptions={{
+      headerStyle: {backgroundColor: '#50A0F1'},
+    }}>
       {/* <Stack.Screen name={"test"} options={{headerShown: false}}/> */}
       <Stack.Screen name={"Login"} options={{headerShown: false}}/>
       <Stack.Screen name={"Register"} options={{headerShown: false}}/>
       <Stack.Screen name={"(tabs)"} options={{headerShown: false}}/>
-
+      <Stack.Screen name={"AddNewSampler"} options={{
+        title: 'Add New Sampler',
+      }}/>
+      <Stack.Screen name={"sampler/[id]/index"}/>
+      <Stack.Screen name={"sampler/[id]/Schedule"} options={{headerShown: false}}/>
     </Stack>
   );
 }

@@ -4,13 +4,14 @@ import {
   Text,
   FlatList,
   StyleSheet,
-  ActivityIndicator, Pressable,
+  ActivityIndicator, Pressable, Button,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { collection, onSnapshot, query, orderBy } from "firebase/firestore";
 // @ts-ignore
 import { db } from "@/firebase.config";
 import {router} from "expo-router";
+import {useNavigation} from "@react-navigation/native";
 
 type SamplerStatus =
   | "free"
@@ -29,6 +30,8 @@ interface WaterSampler {
 export default function WaterSamplersList() {
   const [samplers, setSamplers] = useState<WaterSampler[]>([]);
   const [loading, setLoading] = useState(true);
+
+  const navigation = useNavigation();
 
   useEffect(() => {
     const q = query(
@@ -52,7 +55,16 @@ export default function WaterSamplersList() {
         setLoading(false);
       }
     );
-
+    navigation.setOptions({
+      headerRight: () => (
+        <Pressable
+          onPress={() => router.push("/AddNewSampler")}
+          style={styles.button}
+        >
+          <Text>+ New Sampler</Text>
+        </Pressable>
+      ),
+    })
     return unsubscribe;
   }, []);
 
@@ -88,13 +100,12 @@ export default function WaterSamplersList() {
   }
 
   return (
-    <SafeAreaView style={styles.container}>
-      <Text style={styles.title}>Water Samplers</Text>
+    <View style={styles.container}>
 
       <FlatList
         data={samplers}
         keyExtractor={(item) => item.id}
-        contentContainerStyle={{ paddingBottom: 20 }}
+        contentContainerStyle={{ paddingVertical: 10 }}
         renderItem={({ item }) => (
           <Pressable
             style={styles.card}
@@ -124,7 +135,7 @@ export default function WaterSamplersList() {
           </Pressable>
         )}
       />
-    </SafeAreaView>
+    </View>
   );
 }
 
@@ -174,5 +185,11 @@ const styles = StyleSheet.create({
   statusText: {
     fontSize: 14,
     fontWeight: "600",
+  },
+  button: {
+    backgroundColor: "#47d16e",
+    padding: 15,
+    borderRadius: 10,
+    alignItems: "center",
   },
 });

@@ -53,9 +53,7 @@ export default function AddWaterSampler() {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <Text style={styles.title}>Add Water Sampler</Text>
-
+    <View style={styles.container}>
       <Text style={styles.label}>Sampler Name</Text>
       <TextInput
         style={styles.input}
@@ -89,7 +87,7 @@ export default function AddWaterSampler() {
           <Text style={styles.buttonText}>Create Sampler</Text>
         </TouchableOpacity>
       )}
-    </SafeAreaView>
+    </View>
   );
 }
 
@@ -105,7 +103,7 @@ const styles = StyleSheet.create({
   },
   label: {
     fontSize: 16,
-    marginTop: 12,
+    marginTop: 6,
   },
   input: {
     borderWidth: 1,
