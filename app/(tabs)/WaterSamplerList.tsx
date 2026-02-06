@@ -4,12 +4,13 @@ import {
   Text,
   FlatList,
   StyleSheet,
-  ActivityIndicator,
+  ActivityIndicator, Pressable,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { collection, onSnapshot, query, orderBy } from "firebase/firestore";
 // @ts-ignore
 import { db } from "@/firebase.config";
+import {router} from "expo-router";
 
 type SamplerStatus =
   | "free"
@@ -56,7 +57,7 @@ export default function WaterSamplersList() {
   }, []);
 
   const getStatusColor = (status: SamplerStatus) => {
-    switch (status) {
+    switch (status.toLowerCase()) {
       case "free":
         return "#4CAF50";
       case "scheduled":
@@ -95,14 +96,19 @@ export default function WaterSamplersList() {
         keyExtractor={(item) => item.id}
         contentContainerStyle={{ paddingBottom: 20 }}
         renderItem={({ item }) => (
-          <View style={styles.card}>
+          <Pressable
+            style={styles.card}
+            onPress={_=>{
+              router.push(`/sampler/${item.id}`)
+            }}
+          >
             <Text style={styles.name}>{item.name}</Text>
 
             <Text style={styles.label}>Address</Text>
             <Text>{item.address}</Text>
 
-            <Text style={styles.label}>Phone</Text>
-            <Text>{item.phone}</Text>
+            {/*<Text style={styles.label}>Phone</Text>*/}
+            {/*<Text>{item.phone}</Text>*/}
 
             <View style={styles.statusRow}>
               <View
@@ -115,7 +121,7 @@ export default function WaterSamplersList() {
                 {item.status.replace("_", " ").toUpperCase()}
               </Text>
             </View>
-          </View>
+          </Pressable>
         )}
       />
     </SafeAreaView>
