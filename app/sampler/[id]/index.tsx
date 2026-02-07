@@ -28,17 +28,33 @@ export default function SamplerDetails() {
       if (snap.exists()) {
         setSampler(snap.data() as Sampler);
       }
-
     };
 
     fetchSampler();
-
   }, [id]);
-  useEffect(()=>{
+
+  useEffect(() => {
     navigation.setOptions({
       headerTitle: sampler?.name || "Water Sampler",
-    })
-  },[sampler])
+    });
+  }, [sampler]);
+
+  const getStatusStyle = (status: string) => {
+    switch ((status || "").toLowerCase()) {
+      case "free":
+        return styles.statusFree;
+      case "scheduled":
+        return styles.statusScheduled;
+      case "taking_sample":
+      case "taking sample":
+        return styles.statusTakingSample;
+      case "has_sample":
+      case "has sample":
+        return styles.statusHasSample;
+      default:
+        return styles.statusUnknown;
+    }
+  };
 
   if (!sampler) {
     return <Text style={{ padding: 20 }}>Loading...</Text>;
@@ -46,9 +62,27 @@ export default function SamplerDetails() {
 
   return (
     <View style={styles.container}>
-      <Text>Address: {sampler.address}</Text>
-      <Text>Phone: {sampler.phone}</Text>
-      <Text>Status: {sampler.status}</Text>
+      <View style={styles.card}>
+        <View style={styles.row}>
+          <Text style={styles.label}>Address</Text>
+          <Text style={styles.value}>{sampler.address}</Text>
+        </View>
+
+        <View style={styles.row}>
+          <Text style={styles.label}>Phone</Text>
+          <Text style={styles.value}>{sampler.phone}</Text>
+        </View>
+
+        <View style={[styles.row, styles.rowLast]}>
+          <Text style={styles.label}>Status</Text>
+          <View style={styles.statusPill}>
+            <View style={[styles.statusDot, getStatusStyle(sampler.status)]} />
+            <Text style={[styles.statusText]}>
+              {String(sampler.status).replaceAll("_", " ").toUpperCase()}
+            </Text>
+          </View>
+        </View>
+      </View>
 
       {sampler.status === "Free" && (
         <Button
@@ -67,12 +101,7 @@ export default function SamplerDetails() {
       )}
 
       {sampler.status === "Scheduled" && (
-        <Button
-          title="Edit Schedule"
-          onPress={() =>
-            router.push(`/sampler/${id}Schedule`)
-          }
-        />
+        <Button title="Edit Schedule" onPress={() => router.push(`/sampler/${id}Schedule`)} />
       )}
     </View>
   );
@@ -99,36 +128,78 @@ export const styles = StyleSheet.create({
     elevation: 3, // Android shadow
   },
 
+  row: {
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: "#E6E6E6",
+  },
+  rowLast: {
+    borderBottomWidth: 0,
+    paddingBottom: 0,
+  },
+
   label: {
-    fontSize: 14,
-    color: "#666",
-    marginTop: 10,
+    fontSize: 12,
+    color: "#777",
+    letterSpacing: 0.3,
   },
 
   value: {
-    fontSize: 18,
-    fontWeight: "500",
-    marginTop: 4,
+    fontSize: 16,
+    fontWeight: "600",
+    marginTop: 6,
+    color: "#111",
+  },
+
+  statusPill: {
+    flexDirection: "row",
+    alignItems: "center",
+    alignSelf: "flex-start",
+    backgroundColor: "#fff",
+    borderRadius: 999,
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+    marginTop: 8,
+    borderWidth: 1,
+    borderColor: "#E6E6E6",
+    gap: 8,
+  },
+
+  statusDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+  },
+
+  statusText: {
+    fontSize: 12,
+    fontWeight: "800",
+    letterSpacing: 0.6,
   },
 
   statusFree: {
     color: "green",
-    fontWeight: "bold",
+    backgroundColor: "green",
   },
 
   statusScheduled: {
     color: "orange",
-    fontWeight: "bold",
+    backgroundColor: "orange",
   },
 
   statusTakingSample: {
     color: "#1e90ff",
-    fontWeight: "bold",
+    backgroundColor: "#1e90ff",
   },
 
   statusHasSample: {
     color: "red",
-    fontWeight: "bold",
+    backgroundColor: "red",
+  },
+
+  statusUnknown: {
+    color: "#666",
+    backgroundColor: "#666",
   },
 
   button: {
