@@ -1,17 +1,19 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   View,
   Text,
   FlatList,
   StyleSheet,
-  ActivityIndicator, Pressable, Button,
+  ActivityIndicator,
+  Pressable,
+  TextInput,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { collection, onSnapshot, query, orderBy } from "firebase/firestore";
 // @ts-ignore
 import { db } from "@/firebase.config";
-import {router} from "expo-router";
-import {useNavigation} from "@react-navigation/native";
+import { router } from "expo-router";
+import { useNavigation } from "@react-navigation/native";
 
 type SamplerStatus =
   | "free"
@@ -30,14 +32,12 @@ interface WaterSampler {
 export default function WaterSamplersList() {
   const [samplers, setSamplers] = useState<WaterSampler[]>([]);
   const [loading, setLoading] = useState(true);
+  const [searchText, setSearchText] = useState("");
 
   const navigation = useNavigation();
 
   useEffect(() => {
-    const q = query(
-      collection(db, "waterSamplers"),
-      orderBy("createdAt", "desc")
-    );
+    const q = query(collection(db, "waterSamplers"), orderBy("createdAt", "desc"));
 
     const unsubscribe = onSnapshot(
       q,
@@ -55,16 +55,15 @@ export default function WaterSamplersList() {
         setLoading(false);
       }
     );
+
     navigation.setOptions({
       headerRight: () => (
-        <Pressable
-          onPress={() => router.push("/AddNewSampler")}
-          style={styles.button}
-        >
+        <Pressable onPress={() => router.push("/AddNewSampler")} style={styles.button}>
           <Text>+ New Sampler</Text>
         </Pressable>
       ),
-    })
+    });
+
     return unsubscribe;
   }, []);
 
@@ -82,6 +81,33 @@ export default function WaterSamplersList() {
         return "#999";
     }
   };
+
+  const filteredSamplers = useMemo(() => {
+    const q = searchText.trim().toLowerCase();
+    if (!q) return samplers;
+
+    const scoreSampler = (s: WaterSampler) => {
+      const id = (s.id ?? "").toLowerCase(); // treat as "number"
+      const phone = (s.phone ?? "").toLowerCase(); // also "number"-ish
+      const name = (s.name ?? "").toLowerCase();
+      const address = (s.address ?? "").toLowerCase();
+
+      // Order priority: number -> name -> address
+      if (id.includes(q) || phone.includes(q)) return 3;
+      if (name.includes(q)) return 2;
+      if (address.includes(q)) return 1;
+      return 0;
+    };
+
+    return samplers
+      .map((s) => ({ s, score: scoreSampler(s) }))
+      .filter((x) => x.score > 0)
+      .sort((a, b) => {
+        if (b.score !== a.score) return b.score - a.score; // higher priority first
+        return (a.s.name ?? "").localeCompare(b.s.name ?? ""); // stable-ish tie-breaker
+      })
+      .map((x) => x.s);
+  }, [samplers, searchText]);
 
   if (loading) {
     return (
@@ -101,40 +127,59 @@ export default function WaterSamplersList() {
 
   return (
     <View style={styles.container}>
-
-      <FlatList
-        data={samplers}
-        keyExtractor={(item) => item.id}
-        contentContainerStyle={{ paddingVertical: 10 }}
-        renderItem={({ item }) => (
-          <Pressable
-            style={styles.card}
-            onPress={_=>{
-              router.push(`/sampler/${item.id}`)
-            }}
-          >
-            <Text style={styles.name}>{item.name}</Text>
-
-            <Text style={styles.label}>Address</Text>
-            <Text>{item.address}</Text>
-
-            {/*<Text style={styles.label}>Phone</Text>*/}
-            {/*<Text>{item.phone}</Text>*/}
-
-            <View style={styles.statusRow}>
-              <View
-                style={[
-                  styles.statusDot,
-                  { backgroundColor: getStatusColor(item.status) },
-                ]}
-              />
-              <Text style={styles.statusText}>
-                {item.status.replace("_", " ").toUpperCase()}
-              </Text>
-            </View>
+      <View style={styles.searchRow}>
+        <TextInput
+          value={searchText}
+          onChangeText={setSearchText}
+          placeholder="Search by number, name, or address..."
+          autoCapitalize="none"
+          autoCorrect={false}
+          clearButtonMode="while-editing"
+          style={styles.searchInput}
+        />
+        {searchText.length > 0 && (
+          <Pressable onPress={() => setSearchText("")} style={styles.clearBtn}>
+            <Text style={styles.clearBtnText}>Clear</Text>
           </Pressable>
         )}
-      />
+      </View>
+
+      {filteredSamplers.length === 0 ? (
+        <SafeAreaView style={styles.center}>
+          <Text>No matches for “{searchText.trim()}”</Text>
+        </SafeAreaView>
+      ) : (
+        <FlatList
+          data={filteredSamplers}
+          keyExtractor={(item) => item.id}
+          contentContainerStyle={{ paddingVertical: 10 }}
+          renderItem={({ item }) => (
+            <Pressable
+              style={styles.card}
+              onPress={(_) => {
+                router.push(`/sampler/${item.id}`);
+              }}
+            >
+              <Text style={styles.name}>{item.name}</Text>
+
+              <Text style={styles.label}>Address</Text>
+              <Text>{item.address}</Text>
+
+              <View style={styles.statusRow}>
+                <View
+                  style={[
+                    styles.statusDot,
+                    { backgroundColor: getStatusColor(item.status) },
+                  ]}
+                />
+                <Text style={styles.statusText}>
+                  {item.status.replace("_", " ").toUpperCase()}
+                </Text>
+              </View>
+            </Pressable>
+          )}
+        />
+      )}
     </View>
   );
 }
@@ -153,6 +198,30 @@ const styles = StyleSheet.create({
     fontSize: 26,
     fontWeight: "bold",
     marginVertical: 16,
+  },
+  searchRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    marginTop: 10,
+  },
+  searchInput: {
+    flex: 1,
+    backgroundColor: "#fff",
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    borderWidth: 1,
+    borderColor: "#E6E6E6",
+  },
+  clearBtn: {
+    backgroundColor: "#EFEFEF",
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    borderRadius: 10,
+  },
+  clearBtnText: {
+    fontWeight: "600",
   },
   card: {
     backgroundColor: "#fff",
