@@ -55,8 +55,9 @@ export default function SamplerDetails() {
           title="Schedule Sampler"
           onPress={() =>
             router.push({
-              pathname: `/sampler/${id}/Schedule`,
+              pathname: `/sampler/[id]/Schedule`,
               params: {
+                id: id,
                 name: sampler.name,
                 status: sampler.status,
               },
