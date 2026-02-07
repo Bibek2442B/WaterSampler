@@ -46,16 +46,21 @@ export default function SamplerDetails() {
 
   return (
     <View style={styles.container}>
-
-      <Text>Status: {sampler.status}</Text>
-      <Text>Phone: {sampler.phone}</Text>
       <Text>Address: {sampler.address}</Text>
+      <Text>Phone: {sampler.phone}</Text>
+      <Text>Status: {sampler.status}</Text>
 
       {sampler.status === "Free" && (
         <Button
           title="Schedule Sampler"
           onPress={() =>
-            router.push(`/sampler/${id}/schedule`)
+            router.push({
+              pathname: `/sampler/${id}/Schedule`,
+              params: {
+                name: sampler.name,
+                status: sampler.status,
+              },
+            })
           }
         />
       )}
@@ -64,7 +69,7 @@ export default function SamplerDetails() {
         <Button
           title="Edit Schedule"
           onPress={() =>
-            router.push(`/sampler/${id}/schedule`)
+            router.push(`/sampler/${id}Schedule`)
           }
         />
       )}
@@ -76,7 +81,6 @@ export const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 20,
-    backgroundColor: "#fff",
   },
 
   title: {

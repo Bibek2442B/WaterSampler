@@ -5,9 +5,14 @@ import { db } from "@/firebase.config";
 import { useState } from "react";
 
 export default function ScheduleSampler() {
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const { id, name, status } = useLocalSearchParams<{
+    id: string;
+    name: string;
+    status: string;
+  }>();
   const router = useRouter();
   const [schedule, setSchedule] = useState("");
+
 
   const saveSchedule = async () => {
     if (!id) return;
@@ -22,7 +27,7 @@ export default function ScheduleSampler() {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Schedule Sampler</Text>
+      <Text style={styles.title}>{name}</Text>
 
       <TextInput
         placeholder="Enter schedule (date/time)"

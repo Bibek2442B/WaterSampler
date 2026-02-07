@@ -59,7 +59,7 @@ export default function RootLayout() {
         title: 'Add New Sampler',
       }}/>
       <Stack.Screen name={"sampler/[id]/index"}/>
-      <Stack.Screen name={"sampler/[id]/Schedule"} options={{headerShown: false}}/>
+      <Stack.Screen name={"sampler/[id]/Schedule"} options={{headerTitle: 'Schedule Sampler'}}/>
     </Stack>
   );
 }
