@@ -1,241 +1,247 @@
-import {Text, StyleSheet, TextInput, TouchableOpacity, ActivityIndicator, View, Image} from "react-native";
-import {useEffect, useState} from "react";
-import {SafeAreaProvider, SafeAreaView} from "react-native-safe-area-context";
-import { LinearGradient } from 'expo-linear-gradient';
-import {sendPasswordResetEmail, signInWithEmailAndPassword, User} from "firebase/auth";
+import { useState } from "react";
+import {
+  Text,
+  TextInput,
+  TouchableOpacity,
+  Alert,
+  StyleSheet,
+  View,
+  SafeAreaView,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  Pressable,
+} from "react-native";
+import { signInWithEmailAndPassword } from "firebase/auth";
+import { doc, getDoc, updateDoc } from "firebase/firestore";
+import { Link } from "expo-router";
+import { Ionicons } from "@expo/vector-icons";
 // @ts-ignore
-import {auth} from "@/firebase.config";
-import {Link} from "expo-router";
-import Ionicons from '@expo/vector-icons/Ionicons';
-
-
+import { auth, db } from "@/firebase.config";
 
 export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [user, setUser] = useState<User | null>(null);
 
-  useEffect(() => {
-    setError('');
-  },[email,password]);
-
-  const handlePasswordReset = async () => {
-    setLoading(true);
-    if (!email) {
-      setError("Email is required");
-      setLoading(false);
-      return
-    }
-    try{
-      // @ts-ignore
-      await sendPasswordResetEmail(auth, email);
-      alert("Check your email to reset your password");
-      setEmail("");
-    }
-    catch(error)  {
-      // @ts-ignore
-      switch (error.code) {
-        case 'auth/invalid-email':
-          setError('Invalid email address');
-          break;
-        default:
-          setError("Error sending password reset");
-      }
-      console.error("Error sending password reset:", error);
-    };
-    setLoading(false);
-  }
-
-  const handleLoginButton = async() => {
-    setLoading(true);
+  const handleLogin = async () => {
     if (!email || !password) {
-      setError("Input fields are required");
-      setLoading(false);
+      Alert.alert("Email and password required");
       return;
     }
 
-    try{
+    try {
       // @ts-ignore
-      const userCredentials = await signInWithEmailAndPassword(auth, email, password);
-      if(!userCredentials.user.emailVerified){
+      const cred = await signInWithEmailAndPassword(auth, email, password);
+
+      if (!cred.user.emailVerified) {
         // @ts-ignore
         await auth.signOut();
-        setError('Please verify your email address');
-        setLoading(false);
+        Alert.alert("Verify your email first");
         return;
       }
-      setUser(userCredentials.user);
-      setEmail('');
-      setPassword('');
-    }catch (error) {
-      //@ts-ignore
-      switch (error.code) {
-        case 'auth/invalid-email':
-          setError('Invalid email address');
-          break;
-        case 'auth/user-not-found':
-          setError('No account found with this email');
-          break;
-        case 'auth/wrong-password':
-          setError('Incorrect password');
-          break;
-        case 'auth/missing-email':
-          setError('Email is required');
-          break;
-        case 'auth/missing-password':
-          setError('Password is required');
-          break;
-        case 'auth/invalid-credential':
-          setError('Invalid credential');
-          break;
-        default:
-          setError('An error occurred during login');
-          console.error("Error during login:", error);
+
+      const userRef = doc(db, "users", cred.user.uid);
+      const snap = await getDoc(userRef);
+
+      if (!snap.exists()) {
+        // @ts-ignore
+        await auth.signOut();
+        Alert.alert("User data missing");
+        return;
       }
-    }finally{
-      setLoading(false);
+
+      const userData = snap.data();
+
+      if (!userData.emailVerified) {
+        await updateDoc(userRef, { emailVerified: true });
+      }
+
+      if (!userData.approvedByAdmin) {
+        // @ts-ignore
+        await auth.signOut();
+        Alert.alert("Waiting for admin approval");
+        return;
+      }
+
+      Alert.alert("Welcome!");
+    } catch (err: any) {
+      Alert.alert("Login error", err.message);
     }
-  }
-  // @ts-ignore
-  return(
-    <SafeAreaProvider>
-      <SafeAreaView style={{flex: 1}}>
-        <LinearGradient
-          colors={["#59667E", "#D4E3FF", "#858E9F"]}
-          start={[0.5, 0]}
-          end={[0.5, 1]}
-          locations={[0.11, 0.53, 0.92]}
-          style={styles.container}
-        >
-        {/* <Image source={require('../assets/images/aguadonorte.png')} style={styles.image} /> */}
-        <Text style={[styles.loginText,{color: 'red'}]}>Water Sampler</Text>
-          <Text style={styles.loginText}>Login</Text>
-          {error && <Text style={{color: 'red'}}>{error}</Text>}
+  };
 
-          <Text style={styles.text}>Email</Text>
-          <View style={styles.inputContainer}>
-            <Ionicons name="person-outline" size={20} color="gray" style={styles.inputIcon} />
-            <TextInput
-              style={styles.input}
-              keyboardType="email-address"
-              autoCapitalize="none"
-              placeholder={"Enter your email address "}
-              placeholderTextColor={"gray"}
-              value={email}
-              onChangeText={setEmail}
-            />
-          </View>
-          <Text style={styles.text}> Password</Text>
-          <View style={styles.inputContainer}>
-            <Ionicons name="lock-closed-outline" size={20} color="gray" style={styles.inputIcon} />
-            <TextInput
-              style={styles.input}
-              secureTextEntry={!showPassword}
-              placeholder={"Enter your password "}
-              placeholderTextColor={"gray"}
-              value={password}
-              onChangeText={setPassword}
-            />
-            <TouchableOpacity onPress={() => setShowPassword(s => !s)} style={styles.inputRightTouchable}>
-              <Ionicons name={showPassword ? "eye-off" : "eye"} size={20} color="gray" style={styles.inputIconRight} />
-            </TouchableOpacity>
-          </View>
-          {
-            loading? (
-              <ActivityIndicator size="large" />
-            ) :(
-              <>
-                <TouchableOpacity
-                  style={styles.button}
-                  onPress={handleLoginButton}
+  return (
+    <View style={styles.safe}>
+      <KeyboardAvoidingView
+        style={styles.safe}
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
+      >
+        <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
+          <View style={styles.card}>
+            <Text style={styles.title}>Welcome back</Text>
+            <Text style={styles.subtitle}>Login to continue.</Text>
+
+            <View style={styles.field}>
+              <Text style={styles.label}>Email</Text>
+              <TextInput
+                style={styles.input}
+                value={email}
+                onChangeText={setEmail}
+                autoCapitalize="none"
+                autoCorrect={false}
+                keyboardType="email-address"
+                returnKeyType="next"
+              />
+            </View>
+
+            <View style={styles.field}>
+              <Text style={styles.label}>Password</Text>
+              <View style={styles.inputRow}>
+                <TextInput
+                  style={styles.inputFlex}
+                  value={password}
+                  onChangeText={setPassword}
+                  secureTextEntry={!showPassword}
+                  autoCapitalize="none"
+                  returnKeyType="done"
+                />
+                <Pressable
+                  onPress={() => setShowPassword((v) => !v)}
+                  style={styles.iconButton}
+                  hitSlop={10}
+                  accessibilityRole="button"
+                  accessibilityLabel={showPassword ? "Hide password" : "Show password"}
                 >
-                  <Text style={styles.text}>Login</Text>
-                </TouchableOpacity>
-                <Text style={styles.text}>Not Registered Yet?</Text>
-                <Link href={"/Register"}><Text style={[styles.text, styles.link]}>Register</Text></Link>
-                <Text style={styles.text}>Forgot Password</Text>
-                <TouchableOpacity onPress={handlePasswordReset}><Text style={[styles.text, styles.link]}>Reset Password</Text></TouchableOpacity>
-              </>
-            )
-          }
-        </LinearGradient>
-      </SafeAreaView>
-    </SafeAreaProvider>
+                  <Ionicons name={showPassword ? "eye-off" : "eye"} size={20} color="#6B7280" />
+                </Pressable>
+              </View>
+            </View>
 
+            <TouchableOpacity style={styles.button} onPress={handleLogin} activeOpacity={0.85}>
+              <Text style={styles.buttonText}>Login</Text>
+            </TouchableOpacity>
+
+            <View style={styles.registerRow}>
+              <Text style={styles.registerText}>New here? </Text>
+              <Link href="/Register" asChild>
+                <Pressable hitSlop={10}>
+                  <Text style={styles.registerLink}>Register</Text>
+                </Pressable>
+              </Link>
+            </View>
+          </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container:{
+  safe: {
     flex: 1,
+    backgroundColor: "#F6F8FA",
+  },
+  container: {
+    flexGrow: 1,
     padding: 20,
     justifyContent: "center",
+  },
+  card: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: 16,
+    padding: 18,
+    borderWidth: 1,
+    borderColor: "#E7E9ED",
+    shadowColor: "#000",
+    shadowOpacity: 0.06,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 6 },
+    elevation: 2,
+  },
+  title: {
+    fontSize: 26,
+    fontWeight: "800",
+    color: "#111827",
+  },
+  subtitle: {
+    marginTop: 6,
+    marginBottom: 18,
+    fontSize: 14,
+    color: "#6B7280",
+    lineHeight: 20,
+  },
+  field: {
+    marginBottom: 12,
+  },
+  label: {
+    fontSize: 12,
+    fontWeight: "700",
+    color: "#6B7280",
+    marginBottom: 6,
+    letterSpacing: 0.4,
+    textTransform: "uppercase",
+  },
+  input: {
+    borderWidth: 1,
+    borderColor: "#E5E7EB",
+    backgroundColor: "#FAFAFA",
+    paddingVertical: 12,
+    paddingHorizontal: 12,
+    borderRadius: 12,
+    fontSize: 16,
+    color: "#111827",
+  },
+
+  inputRow: {
+    flexDirection: "row",
     alignItems: "center",
+    borderWidth: 1,
+    borderColor: "#E5E7EB",
+    backgroundColor: "#FAFAFA",
+    borderRadius: 12,
+    paddingLeft: 12,
   },
-  loginText:{
-    fontSize: 30,
-    fontWeight: "bold",
-    marginBottom: 20,
-  },
-  text:{
-    fontSize: 20,
-  },
-  input:{
+  inputFlex: {
     flex: 1,
-    height: 50,
-    paddingLeft: 8,
+    paddingVertical: 12,
+    paddingRight: 8,
+    fontSize: 16,
+    color: "#111827",
   },
-  inputContainer: {
-    width: '80%',
-    flexDirection: 'row',
-    alignItems: 'center',
-    height: 50,
-    borderWidth: 2,
-    borderColor: 'black',
-    marginBottom: 20,
-    borderRadius: 20,
-    paddingHorizontal: 10,
+  iconButton: {
+    paddingHorizontal: 12,
+    paddingVertical: 12,
   },
-  inputIcon: {
-    marginRight: 8,
-  },
-  inputRightTouchable: {
-    padding: 6,
-  },
-  inputIconRight: {
-    marginLeft: 8,
-  },
-  button:{
-    width: '80%',
-    borderRadius: 20,
-    marginBottom: 20,
+
+  button: {
+    backgroundColor: "#2196F3",
+    paddingVertical: 14,
+    borderRadius: 12,
     alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "lightgreen",
-    padding: 15,
-  },
-  googleButton: {
-    flexDirection: 'row',
-    backgroundColor: '#4285F4',
-    padding: 12,
-    borderRadius: 6,
-    alignItems: 'center',
-    marginBottom: 60,
+    marginTop: 6,
   },
   buttonText: {
-    color: '#fff',
-    marginLeft: 10,
+    color: "#FFFFFF",
     fontSize: 16,
-  },
-  lightText:{
-    color: "gray",
-  },
-  link:{
-    color: "blue",
+    fontWeight: "800",
+    letterSpacing: 0.3,
   },
 
+  registerRow: {
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+    marginTop: 14,
+  },
+  registerText: {
+    fontSize: 13,
+    color: "#6B7280",
+  },
+  registerLink: {
+    fontSize: 13,
+    fontWeight: "800",
+    color: "#2196F3",
+    textDecorationLine: "underline",
+    textDecorationColor: "#2196F3",
+  },
 });
-
