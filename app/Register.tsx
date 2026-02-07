@@ -25,6 +25,71 @@ export default function Register() {
     setErrorMsg("");
   },[email, password, repeatPassword]);
 
+  // const handleRegisterButton = async() => {
+  //   if(!(password === repeatPassword)){
+  //     setErrorMsg("The passwords do not match");
+  //     return;
+  //   }
+  //   if(password.length < 8){
+  //     setErrorMsg("Password must be at least 8 characters");
+  //     return;
+  //   }
+  //   const user={
+  //     email: email,
+  //     role: "viewer",
+  //     approved: false,
+  //     blocked: false,
+  //   }
+  //   try {
+  //     setLoading(true);
+  //     // @ts-ignore
+  //     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+  //     try{
+  //       //@ts-ignore
+  //       auth.signOut();
+  //     }
+  //     catch (e) {
+        
+  //     }
+  //     const uid = userCredential.user.uid;
+  //     await sendEmailVerification(userCredential.user);
+  //     await setDoc(doc(db, "users",uid), user);
+  //     setEmail("");
+  //     setPassword("");
+  //     setRepeatPassword("");
+  //     setRegisterSuccess(true);
+  //     setLoading(false);
+  //     alert("Successfully registered! Please verify your email and login.");
+  //   }catch (error) {
+  //     console.error("Error during registration:", error);
+  //     // @ts-ignore
+  //     switch (error.code) {
+  //       case 'auth/email-already-in-use':
+  //         setErrorMsg('This email is already registered!');
+  //         break;
+  //       case 'auth/invalid-email':
+  //         setErrorMsg('Invalid email address!');
+  //         break;
+  //       case 'auth/weak-password':
+  //         setErrorMsg('Password should be at least 6 characters!');
+  //         break;
+  //       case 'auth/missing-password':
+  //         setErrorMsg('Password is required!');
+  //         break;
+  //       case 'auth/missing-email':
+  //         setErrorMsg('Email is required!');
+  //         break;
+  //       case 'auth/account-exists-with-different-credential':
+  //         setErrorMsg('This email is already registered!');
+  //         break;
+  //       default:
+  //         setErrorMsg("Unexpected Error!!!!!! Please Contact Support");
+  //     }
+  //   }finally {
+  //     setLoading(false);
+  //   }
+  // }
+
   const handleRegisterButton = async() => {
     if(!(password === repeatPassword)){
       setErrorMsg("The passwords do not match");
@@ -34,31 +99,39 @@ export default function Register() {
       setErrorMsg("Password must be at least 8 characters");
       return;
     }
-    const user={
+    
+    const user = {
       email: email,
       role: "viewer",
+      approved: false,
+      blocked: false,
     }
+    
     try {
       setLoading(true);
-      // @ts-ignore
+      
+      // Create user account
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-      try{
-        //@ts-ignore
-        auth.signOut();
-      }
-      catch (e) {
-        
-      }
       const uid = userCredential.user.uid;
+      
+      // FIRST: Create Firestore document (this is critical!)
+      await setDoc(doc(db, "users", uid), user);
+      
+      // SECOND: Send verification email
       await sendEmailVerification(userCredential.user);
-      await setDoc(doc(db, "users",uid), user);
+      
+      // THIRD: Sign out the user (now that everything is saved)
+      await auth.signOut();
+      
+      // Clear form
       setEmail("");
       setPassword("");
       setRepeatPassword("");
       setRegisterSuccess(true);
-      setLoading(false);
-      alert("Successfully registered! Please verify your email and login.");
-    }catch (error) {
+      
+      alert("Successfully registered! Please verify your email and wait for admin approval before logging in.");
+      
+    } catch (error) {
       console.error("Error during registration:", error);
       // @ts-ignore
       switch (error.code) {
@@ -81,13 +154,12 @@ export default function Register() {
           setErrorMsg('This email is already registered!');
           break;
         default:
-          setErrorMsg("Unexpected Error!!!!!! Please Contact Support");
+          setErrorMsg("Unexpected Error! Please Contact Support");
       }
-    }finally {
+    } finally {
       setLoading(false);
     }
   }
-
   return(
     <SafeAreaProvider>
       <SafeAreaView style={styles.container}>

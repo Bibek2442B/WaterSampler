@@ -7,6 +7,7 @@ export default function TabsLayout(){
       <Tabs.Screen name={"Dashboard"} options={{headerShown: false}} />
       <Tabs.Screen name={"Hello"} options={{headerShown: false}}/>
       <Tabs.Screen name={"User"} options={{headerShown: false}}/>
+      <Tabs.Screen name={"UserRequest"} options={{headerShown: false}}/>
     </Tabs>
   );
 }
