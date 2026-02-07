@@ -17,13 +17,28 @@ export default function TabsLayout(){
     }}>
       <Tabs.Screen name={"WaterSamplerList"} options={{
         title: "Water Samplers",
+        tabBarIcon: ({color, size, focused}) => (
+          <Ionicons
+            name={focused?"home": "home-outline"}
+            size={size}
+            color={color}
+          />
+        ),
       }}/>
       <Tabs.Screen
           name={"Profile"}
           options={{
             title: "Profile",
             headerTitleAlign: "center",
+            tabBarIcon: ({color, size, focused}) => (
+              <Ionicons
+                name={focused?"person-circle": "person-circle-outline"}
+                size={size}
+                color={color}
+              />
+            ),
           }}
+
       />
     </Tabs>
   );
