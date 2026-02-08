@@ -1,45 +1,69 @@
-import {Tabs} from "expo-router";
-import {Ionicons} from "@expo/vector-icons";
+// import {Tabs} from "expo-router";
+// import {Ionicons} from "@expo/vector-icons";
 
-export default function TabsLayout(){
+// export default function TabsLayout(){
 
+//   return (
+//     <Tabs screenOptions={{
+//       headerStyle: {
+//         backgroundColor: '#66a5e3',
+//       },
+//       headerLeftContainerStyle: {
+//         paddingLeft: 20,
+//       },
+//       headerRightContainerStyle:{
+//         paddingRight: 20,
+//       }
+//     }}>
+//       <Tabs.Screen name={"WaterSamplerList"} options={{
+//         title: "Water Samplers",
+//         tabBarIcon: ({color, size, focused}) => (
+//           <Ionicons
+//             name={focused?"home": "home-outline"}
+//             size={size}
+//             color={color}
+//           />
+//         ),
+//       }}/>
+//       <Tabs.Screen
+//           name={"Profile"}
+//           options={{
+//             title: "Profile",
+//             headerTitleAlign: "center",
+//             tabBarIcon: ({color, size, focused}) => (
+//               <Ionicons
+//                 name={focused?"person-circle": "person-circle-outline"}
+//                 size={size}
+//                 color={color}
+//               />
+//             ),
+//           }}
+
+//       />
+//     </Tabs>
+//   );
+// }
+
+import { Redirect, Slot } from "expo-router";
+import { useAuth } from "../context/AuthContext";
+import { Tabs} from "expo-router";
+
+export default function TabsLayout() {
+  const { user, loading } = useAuth();
+
+  if (loading) return null;
+  if (!user) return <Redirect href="/Login" />;
+
+  // return <Slot />;
   return (
-    <Tabs screenOptions={{
-      headerStyle: {
-        backgroundColor: '#66a5e3',
-      },
-      headerLeftContainerStyle: {
-        paddingLeft: 20,
-      },
-      headerRightContainerStyle:{
-        paddingRight: 20,
-      }
-    }}>
-      <Tabs.Screen name={"WaterSamplerList"} options={{
-        title: "Water Samplers",
-        tabBarIcon: ({color, size, focused}) => (
-          <Ionicons
-            name={focused?"home": "home-outline"}
-            size={size}
-            color={color}
-          />
-        ),
-      }}/>
+    <Tabs >
       <Tabs.Screen
-          name={"Profile"}
-          options={{
-            title: "Profile",
-            headerTitleAlign: "center",
-            tabBarIcon: ({color, size, focused}) => (
-              <Ionicons
-                name={focused?"person-circle": "person-circle-outline"}
-                size={size}
-                color={color}
-              />
-            ),
-          }}
-
+        name={"WaterSamplerList"} 
+        options={{
+          title: "Water Samplers"
+        }}
       />
     </Tabs>
   );
 }
+

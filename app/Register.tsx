@@ -17,7 +17,7 @@ import { createUserWithEmailAndPassword, sendEmailVerification } from "firebase/
 import { doc, setDoc, serverTimestamp } from "firebase/firestore";
 import { Ionicons } from "@expo/vector-icons";
 // @ts-ignore
-import { auth, db } from "@/firebase.config";
+import { useAuth } from "./context/AuthContext";
 
 export default function Register() {
   const [name, setName] = useState("");
@@ -27,37 +27,54 @@ export default function Register() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
-  const handleRegister = async () => {
-    if (!name || !email || !password || !confirmPassword) {
-      Alert.alert("All fields are required");
-      return;
-    }
+  const { register } = useAuth();
 
+  const handleRegister = async () => {
     if (password !== confirmPassword) {
       Alert.alert("Passwords do not match");
       return;
     }
 
     try {
-      // @ts-ignore
-      const cred = await createUserWithEmailAndPassword(auth, email, password);
-
-      await sendEmailVerification(cred.user);
-
-      await setDoc(doc(db, "users", cred.user.uid), {
-        name,
-        email,
-        role: "user",
-        emailVerified: false,
-        approvedByAdmin: false,
-        createdAt: serverTimestamp(),
-      });
-
+      await register(name, email, password);
       Alert.alert("Verify Email", "Please verify your email before logging in.");
     } catch (err: any) {
       Alert.alert("Error", err.message);
     }
   };
+
+
+  // const handleRegister = async () => {
+  //   if (!name || !email || !password || !confirmPassword) {
+  //     Alert.alert("All fields are required");
+  //     return;
+  //   }
+
+  //   if (password !== confirmPassword) {
+  //     Alert.alert("Passwords do not match");
+  //     return;
+  //   }
+
+  //   try {
+  //     // @ts-ignore
+  //     const cred = await createUserWithEmailAndPassword(auth, email, password);
+
+  //     await sendEmailVerification(cred.user);
+
+  //     await setDoc(doc(db, "users", cred.user.uid), {
+  //       name,
+  //       email,
+  //       role: "user",
+  //       emailVerified: false,
+  //       approvedByAdmin: false,
+  //       createdAt: serverTimestamp(),
+  //     });
+
+  //     Alert.alert("Verify Email", "Please verify your email before logging in.");
+  //   } catch (err: any) {
+  //     Alert.alert("Error", err.message);
+  //   }
+  // };
 
   return (
     <View style={styles.safe}>

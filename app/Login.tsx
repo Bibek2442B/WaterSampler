@@ -17,58 +17,69 @@ import { doc, getDoc, updateDoc } from "firebase/firestore";
 import { Link } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 // @ts-ignore
-import { auth, db } from "@/firebase.config";
+import { useAuth } from "./context/AuthContext";
 
 export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
 
+  const { login } = useAuth();
+
   const handleLogin = async () => {
-    if (!email || !password) {
-      Alert.alert("Email and password required");
-      return;
-    }
-
     try {
-      // @ts-ignore
-      const cred = await signInWithEmailAndPassword(auth, email, password);
-
-      if (!cred.user.emailVerified) {
-        // @ts-ignore
-        await auth.signOut();
-        Alert.alert("Verify your email first");
-        return;
-      }
-
-      const userRef = doc(db, "users", cred.user.uid);
-      const snap = await getDoc(userRef);
-
-      if (!snap.exists()) {
-        // @ts-ignore
-        await auth.signOut();
-        Alert.alert("User data missing");
-        return;
-      }
-
-      const userData = snap.data();
-
-      if (!userData.emailVerified) {
-        await updateDoc(userRef, { emailVerified: true });
-      }
-
-      if (!userData.approvedByAdmin) {
-        // @ts-ignore
-        await auth.signOut();
-        Alert.alert("Waiting for admin approval");
-        return;
-      }
-
-      Alert.alert("Welcome!");
+      await login(email, password);
     } catch (err: any) {
-      Alert.alert("Login error", err.message);
+      Alert.alert("Login failed", err.message);
     }
   };
+
+
+  // const handleLogin = async () => {
+  //   if (!email || !password) {
+  //     Alert.alert("Email and password required");
+  //     return;
+  //   }
+
+  //   try {
+  //     // @ts-ignore
+  //     const cred = await signInWithEmailAndPassword(auth, email, password);
+
+  //     if (!cred.user.emailVerified) {
+  //       // @ts-ignore
+  //       await auth.signOut();
+  //       Alert.alert("Verify your email first");
+  //       return;
+  //     }
+
+  //     const userRef = doc(db, "users", cred.user.uid);
+  //     const snap = await getDoc(userRef);
+
+  //     if (!snap.exists()) {
+  //       // @ts-ignore
+  //       await auth.signOut();
+  //       Alert.alert("User data missing");
+  //       return;
+  //     }
+
+  //     const userData = snap.data();
+
+  //     if (!userData.emailVerified) {
+  //       await updateDoc(userRef, { emailVerified: true });
+  //     }
+
+  //     if (!userData.approvedByAdmin) {
+  //       // @ts-ignore
+  //       await auth.signOut();
+  //       Alert.alert("Waiting for admin approval");
+  //       return;
+  //     }
+
+  //     Alert.alert("Welcome!");
+  //   } catch (err: any) {
+  //     Alert.alert("Login error", err.message);
+  //   }
+  // };
 
   return (
     <View style={styles.safe}>
