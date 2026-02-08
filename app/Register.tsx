@@ -6,15 +6,14 @@ import {
   StyleSheet,
   Alert,
   View,
-  SafeAreaView,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
   Pressable,
+  ActivityIndicator,
 } from "react-native";
-import { Link } from "expo-router";
-import { createUserWithEmailAndPassword, sendEmailVerification } from "firebase/auth";
-import { doc, setDoc, serverTimestamp } from "firebase/firestore";
+import { Link, useRouter } from "expo-router";
+
 import { Ionicons } from "@expo/vector-icons";
 // @ts-ignore
 import { useAuth } from "./context/AuthContext";
@@ -26,20 +25,61 @@ export default function Register() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   const { register } = useAuth();
+  const router = useRouter();
 
   const handleRegister = async () => {
-    if (password !== confirmPassword) {
-      Alert.alert("Passwords do not match");
+    // Validation
+    if (!name.trim() || !email.trim() || !password.trim() || !confirmPassword.trim()) {
+      Alert.alert("Error", "All fields are required");
       return;
     }
 
+    if (password !== confirmPassword) {
+      Alert.alert("Error", "Passwords do not match");
+      return;
+    }
+
+    if (password.length < 6) {
+      Alert.alert("Error", "Password must be at least 6 characters long");
+      return;
+    }
+
+    setIsLoading(true);
+
     try {
       await register(name, email, password);
-      Alert.alert("Verify Email", "Please verify your email before logging in.");
+      
+      Alert.alert(
+        "Registration Successful",
+        "A verification email has been sent to your email address. Please verify your email before logging in.",
+        [
+          {
+            text: "OK",
+            onPress: () => router.replace("/Login"),
+          },
+        ]
+      );
     } catch (err: any) {
-      Alert.alert("Error", err.message);
+      console.error("Registration error:", err);
+      
+      let errorMessage = "Registration failed. Please try again.";
+      
+      if (err.message.includes("email-already-in-use")) {
+        errorMessage = "This email is already registered. Please login instead.";
+      } else if (err.message.includes("invalid-email")) {
+        errorMessage = "Please enter a valid email address";
+      } else if (err.message.includes("weak-password")) {
+        errorMessage = "Password is too weak. Please use a stronger password.";
+      } else if (err.message) {
+        errorMessage = err.message;
+      }
+      
+      Alert.alert("Registration Failed", errorMessage);
+    } finally {
+      setIsLoading(false);
     }
   };
 

@@ -39,68 +39,119 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const unsub = auth.onAuthStateChanged(async (firebaseUser) => {
+    // @ts-ignore
+    const unsub = auth.onAuthStateChanged(async (firebaseUser: User | null) => {
       setUser(firebaseUser);
 
       if (firebaseUser) {
         const ref = doc(db, "users", firebaseUser.uid);
         const snap = await getDoc(ref);
-        setUserDoc(snap.exists() ? snap.data() : null);
+
+        if (snap.exists()) {
+          const data = snap.data();
+          setUserDoc(data);
+          
+          // Sync emailVerified from Firebase Auth to Firestore if needed
+          if (firebaseUser.emailVerified && !data.emailVerified) {
+            await updateDoc(ref, { emailVerified: true });
+            // Refresh the userDoc
+            const updatedSnap = await getDoc(ref);
+            setUserDoc(updatedSnap.data());
+          }
+        } else {
+          setUserDoc(null);
+        }
       } else {
         setUserDoc(null);
       }
-
       setLoading(false);
     });
-
     return unsub;
   }, []);
 
-  const login = async (email: string, password: string) => {
-    const cred = await signInWithEmailAndPassword(auth, email, password);
+ const login = async (email: string, password: string) => {
+    try {
+      // @ts-ignore
+      const cred = await signInWithEmailAndPassword(auth, email, password);
 
-    await cred.user.reload(); // Refresh user to get latest emailVerified status
+      // Reload to get the latest emailVerified status from Firebase Auth
+      await cred.user.reload();
+      
+      // Get fresh user data
+      // @ts-ignore
+      const freshUser = auth.currentUser;
+      
+      if (!freshUser) {
+        throw new Error("Authentication failed");
+      }
 
-    if (!cred.user.emailVerified) {
-      await signOut(auth);
-      throw new Error("Please verify your email");
-    }
+      // Check if email is verified in Firebase Auth
+      if (!freshUser.emailVerified) {
+        // @ts-ignore
+        await signOut(auth);
+        throw new Error("Please verify your email before logging in");
+      }
 
-    const ref = doc(db, "users", cred.user.uid);
-    const snap = await getDoc(ref);
+      // Get user document from Firestore
+      const ref = doc(db, "users", freshUser.uid);
+      const snap = await getDoc(ref);
 
-    if (!snap.exists()) {
-      await signOut(auth);
-      throw new Error("User data missing");
-    }
+      if (!snap.exists()) {
+        // @ts-ignore
+        await signOut(auth);
+        throw new Error("User data not found");
+      }
 
-    const userData = snap.data();
+      const userData = snap.data();
 
-    if (!userData.emailVerified) {
-      await updateDoc(ref, { emailVerified: true });
-    }
-    
-    if (userData.role !== "ADMIN" && !userData.approvedByAdmin) {
-      await signOut(auth);
-      throw new Error("Waiting for admin approval");
+      // Sync emailVerified status to Firestore if needed
+      if (!userData.emailVerified) {
+        await updateDoc(ref, { emailVerified: true });
+      }
+
+      // Check admin approval (skip check for ADMIN role)
+      if (userData.role !== "ADMIN" && !userData.approvedByAdmin) {
+        // @ts-ignore
+        await signOut(auth);
+        throw new Error("Waiting for admin approval");
+      }
+
+      // Success - user will be set by onAuthStateChanged
+    } catch (error: any) {
+      console.error("Login error:", error);
+      throw error;
     }
   };
 
-  const register = async (name: string, email: string, password: string) => {
-    const cred = await createUserWithEmailAndPassword(auth, email, password);
-    await sendEmailVerification(cred.user);
+ const register = async (name: string, email: string, password: string) => {
+    try {
+      // @ts-ignore
+      const cred = await createUserWithEmailAndPassword(auth, email, password);
+      
+      // Send verification email
+      await sendEmailVerification(cred.user);
 
-    await setDoc(doc(db, "users", cred.user.uid), {
-      name,
-      email,
-      role: "USER",
-      emailVerified: false,
-      approvedByAdmin: false,
-      createdAt: serverTimestamp(),
-    });
+      // Create user document in Firestore
+      await setDoc(doc(db, "users", cred.user.uid), {
+        name,
+        email,
+        role: "USER",
+        emailVerified: false,
+        approvedByAdmin: false,
+        createdAt: serverTimestamp(),
+      });
+
+      // Sign out immediately so they verify email first
+      // @ts-ignore
+      await signOut(auth);
+    } catch (error: any) {
+      console.error("Registration error:", error);
+      throw error;
+    }
   };
 
   const logout = async () => {
+    // @ts-ignore
     await signOut(auth);
   };
 

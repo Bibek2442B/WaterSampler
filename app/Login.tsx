@@ -6,15 +6,14 @@ import {
   Alert,
   StyleSheet,
   View,
-  SafeAreaView,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
   Pressable,
+  ActivityIndicator,
 } from "react-native";
-import { signInWithEmailAndPassword } from "firebase/auth";
-import { doc, getDoc, updateDoc } from "firebase/firestore";
-import { Link } from "expo-router";
+
+import { Link, useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 // @ts-ignore
 import { useAuth } from "./context/AuthContext";
@@ -23,17 +22,47 @@ export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   const { login } = useAuth();
+  const router = useRouter();
 
-  const handleLogin = async () => {
+ const handleLogin = async () => {
+    // Validation
+    if (!email.trim() || !password.trim()) {
+      Alert.alert("Error", "Please enter both email and password");
+      return;
+    }
+
+    setIsLoading(true);
+
     try {
       await login(email, password);
+      // Login successful - AuthContext will handle navigation via onAuthStateChanged
+      Alert.alert("Success", "Welcome back!");
     } catch (err: any) {
-      Alert.alert("Login failed", err.message);
+      console.error("Login error:", err);
+      
+      // Handle specific error messages
+      let errorMessage = "Login failed. Please try again.";
+      
+      if (err.message.includes("verify your email")) {
+        errorMessage = "Please verify your email before logging in. Check your inbox for the verification link.";
+      } else if (err.message.includes("admin approval")) {
+        errorMessage = "Your account is pending admin approval. Please contact an administrator.";
+      } else if (err.message.includes("invalid-credential") || err.message.includes("user-not-found") || err.message.includes("wrong-password")) {
+        errorMessage = "Invalid email or password";
+      } else if (err.message.includes("too-many-requests")) {
+        errorMessage = "Too many failed attempts. Please try again later.";
+      } else if (err.message) {
+        errorMessage = err.message;
+      }
+      
+      Alert.alert("Login Failed", errorMessage);
+    } finally {
+      setIsLoading(false);
     }
   };
-
 
   // const handleLogin = async () => {
   //   if (!email || !password) {
