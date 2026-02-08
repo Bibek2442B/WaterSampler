@@ -1,20 +1,22 @@
 import { View, Text, StyleSheet, Pressable, Alert } from "react-native";
 import { useRouter } from "expo-router";
 import { getAuth, signOut } from "firebase/auth";
+import { useAuth } from "../context/AuthContext";
 
 export default function ProfileScreen() {
     const router = useRouter();
     const auth = getAuth();
     const user = auth.currentUser;
 
-    const handleLogout = async () => {
-        try {
-            await signOut(auth);
-            // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        } catch (error) {
-            Alert.alert("Logout failed", "Please try again.");
-        }
-    };
+    const {userDoc, logout} = useAuth();
+
+    // const handleLogout = async () => {
+    //     try {
+    //         await signOut(auth);
+    //     } catch (error) {
+    //         Alert.alert("Logout failed", "Please try again.");
+    //     }
+    // };
 
     if (!user) {
         return (
@@ -28,12 +30,12 @@ export default function ProfileScreen() {
         <View style={styles.container}>
             <View style={styles.avatar}>
                 <Text style={styles.avatarText}>
-                    {user.displayName?.charAt(0).toUpperCase() || "U"}
+                    {userDoc?.name?.charAt(0).toUpperCase() || "U"}
                 </Text>
             </View>
 
             <Text style={styles.name}>
-                {user.displayName || "Unnamed User"}
+                {userDoc?.name || "Unnamed User"}
             </Text>
 
             <Text style={styles.email}>{user.email}</Text>
@@ -41,7 +43,7 @@ export default function ProfileScreen() {
             {/* Role */}
             <View style={styles.infoCard}>
                 <Text style={styles.label}>Role</Text>
-                <Text style={styles.value}>Water Sampler Operator</Text>
+                <Text style={styles.value}>{userDoc?.role || "Role not specified"}</Text>
             </View>
 
             <View style={styles.infoCard}>
@@ -70,7 +72,7 @@ export default function ProfileScreen() {
                 <Text style={styles.primaryButtonText}>Edit Profile</Text>
             </Pressable>
 
-            <Pressable style={styles.logoutButton} onPress={handleLogout}>
+            <Pressable style={styles.logoutButton} onPress={logout}>
                 <Text style={styles.logoutText}>Logout</Text>
             </Pressable>
         </View>

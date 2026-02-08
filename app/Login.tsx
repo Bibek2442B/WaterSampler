@@ -39,7 +39,7 @@ export default function Login() {
     try {
       await login(email, password);
       // Login successful - AuthContext will handle navigation via onAuthStateChanged
-      Alert.alert("Success", "Welcome back!");
+      router.replace("/(tabs)/WaterSamplerList");
     } catch (err: any) {
       console.error("Login error:", err);
       
@@ -47,9 +47,9 @@ export default function Login() {
       let errorMessage = "Login failed. Please try again.";
       
       if (err.message.includes("verify your email")) {
-        errorMessage = "Please verify your email before logging in. Check your inbox for the verification link.";
+        errorMessage = "Please verify your email before logging in.";
       } else if (err.message.includes("admin approval")) {
-        errorMessage = "Your account is pending admin approval. Please contact an administrator.";
+        errorMessage = "Your account is pending admin approval.";
       } else if (err.message.includes("invalid-credential") || err.message.includes("user-not-found") || err.message.includes("wrong-password")) {
         errorMessage = "Invalid email or password";
       } else if (err.message.includes("too-many-requests")) {
