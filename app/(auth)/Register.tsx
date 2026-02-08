@@ -16,7 +16,7 @@ import { Link, useRouter } from "expo-router";
 
 import { Ionicons } from "@expo/vector-icons";
 // @ts-ignore
-import { useAuth } from "./context/AuthContext";
+import { useAuth } from "@/context/AuthContext";
 
 export default function Register() {
   const [name, setName] = useState("");

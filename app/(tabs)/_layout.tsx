@@ -45,7 +45,7 @@
 // }
 
 import { Redirect, Slot } from "expo-router";
-import { useAuth } from "../context/AuthContext";
+import { useAuth } from "@/context/AuthContext";
 import { Tabs} from "expo-router";
 
 export default function TabsLayout() {

@@ -64,14 +64,16 @@
 //   );
 // }
 import { Stack } from "expo-router";
-import { AuthProvider } from "./context/AuthContext";
+import { AuthProvider } from "@/context/AuthContext";
 
 export default function RootLayout() {
   return (
     <AuthProvider>
-      <Stack screenOptions={{ headerStyle: { backgroundColor: "#50A0F1" } }}>
-        <Stack.Screen name="Login" options={{ headerShown: false }} />
-        <Stack.Screen name="Register" options={{ headerShown: false }} />
+      <Stack
+        screenOptions={{ headerStyle: { backgroundColor: "#50A0F1" } }}
+        initialRouteName="(auth)"
+      >
+        <Stack.Screen name="(auth)" options={{ headerShown: false }} />
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen
           name="AddNewSampler"
