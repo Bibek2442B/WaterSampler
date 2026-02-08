@@ -17,6 +17,7 @@ import {
   getDoc,
   setDoc,
   serverTimestamp,
+  updateDoc,
 } from "firebase/firestore";
 // @ts-ignore
 import { auth, db } from "@/firebase.config";
@@ -58,6 +59,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const login = async (email: string, password: string) => {
     const cred = await signInWithEmailAndPassword(auth, email, password);
 
+    await cred.user.reload(); // Refresh user to get latest emailVerified status
+
     if (!cred.user.emailVerified) {
       await signOut(auth);
       throw new Error("Please verify your email");
@@ -71,7 +74,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       throw new Error("User data missing");
     }
 
-    if (!snap.data().approved) {
+    const userData = snap.data();
+
+    if (!userData.emailVerified) {
+      await updateDoc(ref, { emailVerified: true });
+    }
+    
+    if (userData.role !== "ADMIN" && !userData.approvedByAdmin) {
       await signOut(auth);
       throw new Error("Waiting for admin approval");
     }
