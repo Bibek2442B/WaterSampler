@@ -72,6 +72,13 @@ export default function ProfileScreen() {
                 <Text style={styles.primaryButtonText}>Edit Profile</Text>
             </Pressable>
 
+            <Pressable
+                style={styles.primaryButton}
+                    onPress={() => router.push("/User")}
+            >
+                <Text style={styles.primaryButtonText}>User Management</Text>
+            </Pressable>
+
             <Pressable style={styles.logoutButton} onPress={logout}>
                 <Text style={styles.logoutText}>Logout</Text>
             </Pressable>
