@@ -73,12 +73,22 @@ export default function ProfileScreen() {
             </Pressable>
             
             {userDoc?.role === "ADMIN" && ( 
-                <Pressable
-                    style={styles.primaryButton}
+                <>
+                    <Pressable
+                        style={styles.primaryButton}
                         onPress={() => router.push("/User")}
-                >
-                    <Text style={styles.primaryButtonText}>User Management</Text>
-                </Pressable>
+                    >
+                        <Text style={styles.primaryButtonText}>User Management</Text>
+                    </Pressable>
+
+                    <Pressable
+                        style={styles.primaryButton}
+                        onPress={() => router.push("/UserRequest")}
+                    >
+                        <Text style={styles.primaryButtonText}>User Requests</Text>
+                    </Pressable>
+                </>
+                
             )}
 
             <Pressable style={styles.logoutButton} onPress={logout}>

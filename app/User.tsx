@@ -66,7 +66,7 @@ export default function UserAdminPage() {
       u.name?.toLowerCase().includes(searchText.toLowerCase()) ||
       u.email?.toLowerCase().includes(searchText.toLowerCase());
     const matchesRole = roleFilter === "ALL" || u.role === roleFilter;
-    return matchesSearch && matchesRole;
+    return matchesSearch && matchesRole && u.approvedByAdmin; 
   });
 
   const confirmChangeRole = (targetId: string, currentRole: string) => {
