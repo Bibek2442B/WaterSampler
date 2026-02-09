@@ -4,7 +4,7 @@ export interface MyUserType {
   id: number;
   name: string;
   email: string;
-  role: "ADMIN" | "OPERATOR" | "USER";
+  role: "ADMIN" | "OPERATOR" | "VIEWER";
   emailVerified: boolean;
   approvedByAdmin: boolean;
   createdAt: Timestamp;

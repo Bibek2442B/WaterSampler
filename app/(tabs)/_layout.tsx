@@ -46,13 +46,14 @@
 
 import { Redirect, Slot } from "expo-router";
 import { useAuth } from "@/context/AuthContext";
+import { Ionicons } from "@expo/vector-icons";
 import { Tabs} from "expo-router";
 
 export default function TabsLayout() {
   const { user, loading } = useAuth();
 
   if (loading) return null;
-  if (!user) return <Redirect href="/Login" />;
+  if (!user) return <Redirect href="/(auth)/Login" />;
 
   // return <Slot />;
   return (
@@ -60,7 +61,28 @@ export default function TabsLayout() {
       <Tabs.Screen
         name={"WaterSamplerList"} 
         options={{
-          title: "Water Samplers"
+          title: "Water Samplers",
+          tabBarIcon: ({ color, size, focused }) => (
+            <Ionicons
+              name={focused ? "water" : "water-outline"}
+              size={size}
+              color={color}
+            />
+          ),
+        }}
+      />
+
+      <Tabs.Screen
+        name="Profile"
+        options={{
+          title: "Profile",
+          tabBarIcon: ({ color, size, focused }) => (
+            <Ionicons
+              name={focused ? "person-circle" : "person-circle-outline"}
+              size={size}
+              color={color}
+            />
+          ),
         }}
       />
     </Tabs>

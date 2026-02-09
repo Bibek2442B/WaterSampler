@@ -26,6 +26,8 @@ type AuthContextType = {
   user: User | null;
   userDoc: any | null;
   loading: boolean;
+  isRegistering: boolean;
+  isLoggingIn: boolean;
   login: (email: string, password: string) => Promise<void>;
   register: (name: string, email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
@@ -37,6 +39,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [userDoc, setUserDoc] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [isRegistering, setIsRegistering] = useState(false);
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
 
   useEffect(() => {
     // @ts-ignore
@@ -70,6 +74,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
  const login = async (email: string, password: string) => {
+    setIsLoggingIn(true);
     try {
       // @ts-ignore
       const cred = await signInWithEmailAndPassword(auth, email, password);
@@ -89,6 +94,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (!freshUser.emailVerified) {
         // @ts-ignore
         await signOut(auth);
+        // Wait for auth state to update
+        await new Promise(resolve => setTimeout(resolve, 1500));
         throw new Error("Please verify your email before logging in");
       }
 
@@ -99,6 +106,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (!snap.exists()) {
         // @ts-ignore
         await signOut(auth);
+        // Wait for auth state to update
+        await new Promise(resolve => setTimeout(resolve, 1500));
         throw new Error("User data not found");
       }
 
@@ -113,6 +122,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (userData.role !== "ADMIN" && !userData.approvedByAdmin) {
         // @ts-ignore
         await signOut(auth);
+        // Wait for auth state to update
+        await new Promise(resolve => setTimeout(resolve, 1500));
         throw new Error("Waiting for admin approval");
       }
 
@@ -120,10 +131,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } catch (error: any) {
       console.error("Login error:", error);
       throw error;
+    } finally {
+      setIsLoggingIn(false);
     }
   };
 
  const register = async (name: string, email: string, password: string) => {
+    setIsRegistering(true);
     try {
       // @ts-ignore
       const cred = await createUserWithEmailAndPassword(auth, email, password);
@@ -141,12 +155,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         createdAt: serverTimestamp(),
       });
 
-      // Sign out immediately so they verify email first
+      // Sign out and ensure state updates before returning
       // @ts-ignore
       await signOut(auth);
+      
+      // Set a longer delay to ensure Firebase auth listener completes
+      await new Promise(resolve => setTimeout(resolve, 1500));
     } catch (error: any) {
       console.error("Registration error:", error);
       throw error;
+    } finally {
+      setIsRegistering(false);
     }
   };
 
@@ -157,7 +176,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   return (
     <AuthContext.Provider
-      value={{ user, userDoc, loading, login, register, logout }}
+      value={{ user, userDoc, loading, isRegistering, isLoggingIn, login, register, logout }}
     >
       {children}
     </AuthContext.Provider>
