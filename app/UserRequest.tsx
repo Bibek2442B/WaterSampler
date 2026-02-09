@@ -31,8 +31,8 @@ export default function UserRequestPage() {
     // Query for users not yet approved
     const q = query(
       collection(db, "users"),
-      where("approvedByAdmin", "==", false),
-      where("emailVerified", "==", true)
+      where("approvedByAdmin", "==", false ),
+      // where("emailVerified", "==", true)
     );
     const unsub = onSnapshot(
       q,
