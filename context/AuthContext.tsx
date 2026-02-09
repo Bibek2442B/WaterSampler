@@ -1,46 +1,27 @@
+import {createContext, ReactNode, useContext, useEffect, useState,} from "react";
 import {
-  createContext,
-  useContext,
-  useEffect,
-  useState,
-  ReactNode,
-} from "react";
-import {
-  User,
-  signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
   sendEmailVerification,
+  signInWithEmailAndPassword,
   signOut,
+  User,
 } from "firebase/auth";
-import {
-  doc,
-  getDoc,
-  setDoc,
-  serverTimestamp,
-  updateDoc,
-} from "firebase/firestore";
-// @ts-ignore
-import { auth, db } from "@/firebase.config";
+import {doc, getDoc, serverTimestamp, setDoc, updateDoc,} from "firebase/firestore";
+import {auth, db} from "@/firebase.config";
+import {AuthContextInterface, UserInterface} from "@/src/interfaces";
+import {ActivityIndicator, View} from "react-native";
 
-type AuthContextType = {
-  user: User | null;
-  userDoc: any | null;
-  loading: boolean;
-  login: (email: string, password: string) => Promise<void>;
-  register: (name: string, email: string, password: string) => Promise<void>;
-  logout: () => Promise<void>;
-};
-
-const AuthContext = createContext<AuthContextType | null>(null);
+const AuthContext = createContext<AuthContextInterface | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
-  const [userDoc, setUserDoc] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
+  const [userDoc, setUserDoc] = useState<UserInterface | null>(null);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [authLoading, setAuthLoading] = useState<boolean>(false);
+
 
   useEffect(() => {
-    // @ts-ignore
-    const unsub = auth.onAuthStateChanged(async (firebaseUser: User | null) => {
+    return auth.onAuthStateChanged(async (firebaseUser: User | null) => {
       setUser(firebaseUser);
 
       if (firebaseUser) {
@@ -48,15 +29,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const snap = await getDoc(ref);
 
         if (snap.exists()) {
-          const data = snap.data();
+          const data = snap.data() as UserInterface;
           setUserDoc(data);
-          
-          // Sync emailVerified from Firebase Auth to Firestore if needed
+
           if (firebaseUser.emailVerified && !data.emailVerified) {
-            await updateDoc(ref, { emailVerified: true });
-            // Refresh the userDoc
+            await updateDoc(ref, {emailVerified: true});
             const updatedSnap = await getDoc(ref);
-            setUserDoc(updatedSnap.data());
+            setUserDoc(updatedSnap.data() as UserInterface);
           }
         } else {
           setUserDoc(null);
@@ -66,98 +45,103 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
       setLoading(false);
     });
-    return unsub;
   }, []);
 
  const login = async (email: string, password: string) => {
+    setAuthLoading(true);
     try {
-      // @ts-ignore
       const cred = await signInWithEmailAndPassword(auth, email, password);
-
-      // Reload to get the latest emailVerified status from Firebase Auth
       await cred.user.reload();
-      
-      // Get fresh user data
-      // @ts-ignore
       const freshUser = auth.currentUser;
       
       if (!freshUser) {
         throw new Error("Authentication failed");
       }
 
-      // Check if email is verified in Firebase Auth
       if (!freshUser.emailVerified) {
-        // @ts-ignore
         await signOut(auth);
         throw new Error("Please verify your email before logging in");
       }
 
-      // Get user document from Firestore
       const ref = doc(db, "users", freshUser.uid);
       const snap = await getDoc(ref);
 
       if (!snap.exists()) {
-        // @ts-ignore
         await signOut(auth);
         throw new Error("User data not found");
       }
 
       const userData = snap.data();
 
-      // Sync emailVerified status to Firestore if needed
       if (!userData.emailVerified) {
         await updateDoc(ref, { emailVerified: true });
       }
 
-      // Check admin approval (skip check for ADMIN role)
       if (userData.role !== "ADMIN" && !userData.approvedByAdmin) {
-        // @ts-ignore
         await signOut(auth);
         throw new Error("Waiting for admin approval");
       }
 
-      // Success - user will be set by onAuthStateChanged
     } catch (error: any) {
       console.error("Login error:", error);
       throw error;
     }
+    finally {
+      setAuthLoading(false);
+    }
   };
 
  const register = async (name: string, email: string, password: string) => {
-    try {
-      // @ts-ignore
+   setAuthLoading(true);
+   try {
       const cred = await createUserWithEmailAndPassword(auth, email, password);
       
-      // Send verification email
       await sendEmailVerification(cred.user);
-
-      // Create user document in Firestore
       await setDoc(doc(db, "users", cred.user.uid), {
-        name,
-        email,
-        role: "USER",
+        name: name.trim() === "" ? "Anonymous" : name,
+        email: email,
+        role: "VIEWER",
         emailVerified: false,
         approvedByAdmin: false,
         createdAt: serverTimestamp(),
       });
 
-      // Sign out immediately so they verify email first
-      // @ts-ignore
       await signOut(auth);
     } catch (error: any) {
       console.error("Registration error:", error);
       throw error;
     }
+    finally {
+      setAuthLoading(false);
+    }
   };
 
   const logout = async () => {
-    // @ts-ignore
+    setAuthLoading(true);
     await signOut(auth);
+    setAuthLoading(false);
   };
+
+  const contextValue = {
+    user: user,
+    userDoc: userDoc,
+    loading: authLoading,
+    login: login,
+    register: register,
+    logout: logout,
+  }
+
+  if (loading) {
+    return (
+      <View style={{ flex: 1, justifyContent: "center" }}>
+        <ActivityIndicator size="large" />
+      </View>
+    );
+  }
 
   return (
     <AuthContext.Provider
-      value={{ user, userDoc, loading, login, register, logout }}
+      value={contextValue}
     >
       {children}
     </AuthContext.Provider>
