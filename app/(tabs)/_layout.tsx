@@ -20,18 +20,9 @@ export default function TabsLayout() {
         paddingRight: 20,
       }
     }}>
-      <Tabs.Screen name={"WaterSamplerList"} options={{
-        title: "Water Samplers",
-        tabBarIcon: ({color, size, focused}) => (
-          <Ionicons
-            name={focused?"home": "home-outline"}
-            size={size}
-            color={color}
-          />
-        ),
-      }}/>
+
       <Tabs.Screen
-        name={"Profile"}
+        name={"WaterSamplerList"}
         options={{
           title: "Water Samplers",
           tabBarIcon: ({ color, size, focused }) => (
@@ -55,17 +46,7 @@ export default function TabsLayout() {
               color={color}
             />
           ),
-          title: "Profile",
-          headerTitleAlign: "center",
-          tabBarIcon: ({color, size, focused}) => (
-            <Ionicons
-              name={focused?"person-circle": "person-circle-outline"}
-              size={size}
-              color={color}
-            />
-          ),
         }}
-
       />
     </Tabs>
   );

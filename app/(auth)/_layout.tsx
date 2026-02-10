@@ -3,7 +3,7 @@ import { ActivityIndicator, View } from "react-native";
 import { useAuth } from "@/context/AuthContext";
 
 export default function AuthLayout() {
-  const { user, loading, isRegistering, isLoggingIn } = useAuth();
+  const { user, loading} = useAuth();
 
   if (loading) {
     return (
@@ -14,7 +14,7 @@ export default function AuthLayout() {
   }
 
   // Don't redirect if we're in the process of registering or logging in
-  if (user && !isRegistering && !isLoggingIn) {
+  if (user && !loading) {
     return <Redirect href="/(tabs)/WaterSamplerList" />;
   }
 
