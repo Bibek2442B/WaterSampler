@@ -12,6 +12,7 @@ export interface UserInterface {
 }
 
 export interface ScheduleInterface {
+  scheduledBy: UserInterface,
   startTime: Timestamp,
   bursts: number,
   intervalMinutes: number,

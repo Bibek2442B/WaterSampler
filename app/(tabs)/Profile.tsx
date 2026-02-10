@@ -10,14 +10,6 @@ export default function ProfileScreen() {
 
     const {userDoc, logout} = useAuth();
 
-    // const handleLogout = async () => {
-    //     try {
-    //         await signOut(auth);
-    //     } catch (error) {
-    //         Alert.alert("Logout failed", "Please try again.");
-    //     }
-    // };
-
     if (!user) {
         return (
             <View style={styles.container}>
