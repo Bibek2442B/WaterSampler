@@ -6,7 +6,7 @@ export default function TabsLayout() {
   const { user, loading } = useAuth();
 
   if (loading) return null;
-  if (!user) return <Redirect href="/Login" />;
+  if (!user) return <Redirect href="/(auth)/Login" />;
 
   return (
     <Tabs screenOptions={{
@@ -33,6 +33,28 @@ export default function TabsLayout() {
       <Tabs.Screen
         name={"Profile"}
         options={{
+          title: "Water Samplers",
+          tabBarIcon: ({ color, size, focused }) => (
+            <Ionicons
+              name={focused ? "water" : "water-outline"}
+              size={size}
+              color={color}
+            />
+          ),
+        }}
+      />
+
+      <Tabs.Screen
+        name="Profile"
+        options={{
+          title: "Profile",
+          tabBarIcon: ({ color, size, focused }) => (
+            <Ionicons
+              name={focused ? "person-circle" : "person-circle-outline"}
+              size={size}
+              color={color}
+            />
+          ),
           title: "Profile",
           headerTitleAlign: "center",
           tabBarIcon: ({color, size, focused}) => (

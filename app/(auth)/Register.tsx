@@ -13,7 +13,6 @@ import {
   ActivityIndicator,
 } from "react-native";
 import { Link, useRouter } from "expo-router";
-
 import { Ionicons } from "@expo/vector-icons";
 // @ts-ignore
 import { useAuth } from "@/context/AuthContext";
@@ -52,16 +51,16 @@ export default function Register() {
     try {
       await register(name, email, password);
       
-      Alert.alert(
-        "Registration Successful",
-        "A verification email has been sent to your email address. Please verify your email before logging in.",
-        [
-          {
-            text: "OK",
-            onPress: () => router.replace("/Login"),
-          },
-        ]
-      );
+      // Navigate immediately to Login before showing alert
+      router.replace("/(auth)/Login");
+      
+      // Show success message after navigation
+      setTimeout(() => {
+        Alert.alert(
+          "Registration Successful",
+          "A verification email has been sent to your email address. Please verify your email before logging in."
+        );
+      }, 100);
     } catch (err: any) {
       console.error("Registration error:", err);
       

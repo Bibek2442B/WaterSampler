@@ -60,6 +60,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       if (!freshUser.emailVerified) {
         await signOut(auth);
+        // Wait for auth state to update
+        await new Promise(resolve => setTimeout(resolve, 1500));
         throw new Error("Please verify your email before logging in");
       }
 
@@ -68,6 +70,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       if (!snap.exists()) {
         await signOut(auth);
+        // Wait for auth state to update
+        await new Promise(resolve => setTimeout(resolve, 1500));
         throw new Error("User data not found");
       }
 
@@ -79,13 +83,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       if (userData.role !== "ADMIN" && !userData.approvedByAdmin) {
         await signOut(auth);
+        // Wait for auth state to update
+        await new Promise(resolve => setTimeout(resolve, 1500));
         throw new Error("Waiting for admin approval");
       }
 
     } catch (error: any) {
       console.error("Login error:", error);
       throw error;
-    }
+    } 
     finally {
       setAuthLoading(false);
     }
@@ -107,10 +113,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
 
       await signOut(auth);
+      
+      // Set a longer delay to ensure Firebase auth listener completes
+      await new Promise(resolve => setTimeout(resolve, 1500));
     } catch (error: any) {
       console.error("Registration error:", error);
       throw error;
-    }
+    } 
     finally {
       setAuthLoading(false);
     }

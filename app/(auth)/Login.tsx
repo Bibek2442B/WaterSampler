@@ -25,7 +25,7 @@ export default function Login() {
   const [isLoading, setIsLoading] = useState(false);
 
   const { login } = useAuth();
-  const router = useRouter();
+  // const router = useRouter();
 
  const handleLogin = async () => {
     // Validation
@@ -39,7 +39,8 @@ export default function Login() {
     try {
       await login(email, password);
       // Login successful - AuthContext will handle navigation via onAuthStateChanged
-      router.replace("/(tabs)/WaterSamplerList");
+      // router.replace("/(tabs)/WaterSamplerList");
+      // Alert.alert("Success", "Welcome back!");
     } catch (err: any) {
       console.error("Login error:", err);
       

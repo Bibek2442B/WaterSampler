@@ -4,6 +4,7 @@ import { doc, getDoc } from "firebase/firestore";
 import { db } from "@/firebase.config";
 import { useEffect, useState } from "react";
 import { useNavigation } from "@react-navigation/native";
+import { useAuth } from "@/context/AuthContext";
 
 type Sampler = {
   name: string;
@@ -19,6 +20,8 @@ export default function SamplerDetails() {
   const [sampler, setSampler] = useState<Sampler | null>(null);
 
   const navigation = useNavigation();
+
+  const { userDoc } = useAuth();
 
   useEffect(() => {
     const fetchSampler = async () => {
@@ -84,7 +87,7 @@ export default function SamplerDetails() {
         </View>
       </View>
 
-      {sampler.status === "Free" && (
+      {sampler.status === "Free" && (userDoc?.role === "OPERATOR" || userDoc?.role === "ADMIN" ) && (
         <Button
           title="Schedule Sampler"
           onPress={() =>
