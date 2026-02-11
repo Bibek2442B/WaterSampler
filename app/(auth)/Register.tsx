@@ -3,7 +3,6 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
-  StyleSheet,
   Alert,
   View,
   KeyboardAvoidingView,
@@ -14,8 +13,8 @@ import {
 } from "react-native";
 import { Link, useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
-// @ts-ignore
 import { useAuth } from "@/context/AuthContext";
+import { styles } from "./Login";
 
 export default function Register() {
   const [name, setName] = useState("");
@@ -30,7 +29,6 @@ export default function Register() {
   const router = useRouter();
 
   const handleRegister = async () => {
-    // Validation
     if (!name.trim() || !email.trim() || !password.trim() || !confirmPassword.trim()) {
       Alert.alert("Error", "All fields are required");
       return;
@@ -50,11 +48,7 @@ export default function Register() {
 
     try {
       await register(name, email, password);
-      
-      // Navigate immediately to Login before showing alert
       router.replace("/(auth)/Login");
-      
-      // Show success message after navigation
       setTimeout(() => {
         Alert.alert(
           "Registration Successful",
@@ -82,39 +76,6 @@ export default function Register() {
     }
   };
 
-
-  // const handleRegister = async () => {
-  //   if (!name || !email || !password || !confirmPassword) {
-  //     Alert.alert("All fields are required");
-  //     return;
-  //   }
-
-  //   if (password !== confirmPassword) {
-  //     Alert.alert("Passwords do not match");
-  //     return;
-  //   }
-
-  //   try {
-  //     // @ts-ignore
-  //     const cred = await createUserWithEmailAndPassword(auth, email, password);
-
-  //     await sendEmailVerification(cred.user);
-
-  //     await setDoc(doc(db, "users", cred.user.uid), {
-  //       name,
-  //       email,
-  //       role: "user",
-  //       emailVerified: false,
-  //       approvedByAdmin: false,
-  //       createdAt: serverTimestamp(),
-  //     });
-
-  //     Alert.alert("Verify Email", "Please verify your email before logging in.");
-  //   } catch (err: any) {
-  //     Alert.alert("Error", err.message);
-  //   }
-  // };
-
   return (
     <View style={styles.safe}>
       <KeyboardAvoidingView
@@ -127,7 +88,6 @@ export default function Register() {
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
-          {/* Header Section */}
           <View style={styles.headerSection}>
             <View style={styles.iconContainer}>
               <Ionicons name="water" size={48} color="#0369A1" />
@@ -136,11 +96,9 @@ export default function Register() {
             <Text style={styles.appSubtitle}>Monitoring & Management System</Text>
           </View>
 
-          {/* Register Card */}
           <View style={styles.card}>
             <Text style={styles.title}>Create Account</Text>
 
-            {/* Name Field */}
             <View style={styles.field}>
               <View style={styles.labelRow}>
                 <Ionicons name="person" size={14} color="#0369A1" />
@@ -157,7 +115,6 @@ export default function Register() {
               />
             </View>
 
-            {/* Email Field */}
             <View style={styles.field}>
               <View style={styles.labelRow}>
                 <Ionicons name="mail" size={14} color="#0369A1" />
@@ -177,7 +134,6 @@ export default function Register() {
               />
             </View>
 
-            {/* Password Field */}
             <View style={styles.field}>
               <View style={styles.labelRow}>
                 <Ionicons name="lock-closed" size={14} color="#0369A1" />
@@ -212,7 +168,6 @@ export default function Register() {
               </View>
             </View>
 
-            {/* Confirm Password Field */}
             <View style={styles.field}>
               <View style={styles.labelRow}>
                 <Ionicons name="lock-closed" size={14} color="#0369A1" />
@@ -247,7 +202,6 @@ export default function Register() {
               </View>
             </View>
 
-            {/* Register Button */}
             <TouchableOpacity
               style={[styles.button, isLoading && styles.buttonDisabled]}
               onPress={handleRegister}
@@ -261,17 +215,15 @@ export default function Register() {
               )}
             </TouchableOpacity>
 
-            {/* Login Link */}
-            <View style={styles.loginRow}>
-              <Text style={styles.loginText}>Already have an account? </Text>
+            <View style={styles.registerRow}>
+              <Text style={styles.registerText}>Already have an account? </Text>
               <Link href="/Login" asChild>
                 <Pressable hitSlop={10} disabled={isLoading}>
-                  <Text style={styles.loginLink}>Sign in</Text>
+                  <Text style={styles.registerLink}>Sign in</Text>
                 </Pressable>
               </Link>
             </View>
 
-            {/* Footer Info */}
             <View style={styles.footerInfo}>
               <Ionicons name="information-circle" size={14} color="#6B7280" />
               <Text style={styles.footerText}>Verify your email before logging in</Text>
@@ -282,190 +234,3 @@ export default function Register() {
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  // Background & Container
-  safe: {
-    flex: 1,
-    backgroundColor: "#F0F9FF",
-  },
-  container: {
-    flexGrow: 1,
-    padding: 20,
-    justifyContent: "center",
-    paddingVertical: 40,
-  },
-
-  // Header Section
-  headerSection: {
-    alignItems: "center",
-    marginBottom: 40,
-  },
-  iconContainer: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: "#E0F2FE",
-    justifyContent: "center",
-    alignItems: "center",
-    marginBottom: 16,
-    shadowColor: "#0369A1",
-    shadowOpacity: 0.15,
-    shadowRadius: 12,
-    shadowOffset: { width: 0, height: 4 },
-    elevation: 3,
-  },
-  appTitle: {
-    fontSize: 28,
-    fontWeight: "900",
-    color: "#0369A1",
-    letterSpacing: 0.5,
-  },
-  appSubtitle: {
-    fontSize: 13,
-    color: "#6B7280",
-    marginTop: 8,
-    letterSpacing: 0.3,
-  },
-
-  // Card
-  card: {
-    backgroundColor: "#FFFFFF",
-    borderRadius: 20,
-    padding: 24,
-    borderWidth: 1,
-    borderColor: "#E0F2FE",
-    shadowColor: "#000",
-    shadowOpacity: 0.08,
-    shadowRadius: 16,
-    shadowOffset: { width: 0, height: 8 },
-    elevation: 4,
-  },
-
-  // Typography
-  title: {
-    fontSize: 24,
-    fontWeight: "800",
-    color: "#0F172A",
-    marginBottom: 4,
-    letterSpacing: -0.5,
-    textAlign: "center",
-  },
-  
-
-  // Fields
-  field: {
-    marginBottom: 18,
-  },
-  labelRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-    marginBottom: 8,
-  },
-  label: {
-    fontSize: 13,
-    fontWeight: "700",
-    color: "#0369A1",
-    letterSpacing: 0.3,
-  },
-
-  // Input Fields
-  input: {
-    borderWidth: 1.5,
-    borderColor: "#CBD5E1",
-    backgroundColor: "#F8FAFC",
-    paddingVertical: 14,
-    paddingHorizontal: 14,
-    borderRadius: 12,
-    fontSize: 15,
-    color: "#0F172A",
-    fontWeight: "500",
-  },
-
-  inputRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    borderWidth: 1.5,
-    borderColor: "#CBD5E1",
-    backgroundColor: "#F8FAFC",
-    borderRadius: 12,
-    paddingLeft: 14,
-  },
-  inputFlex: {
-    flex: 1,
-    paddingVertical: 14,
-    paddingRight: 10,
-    fontSize: 15,
-    color: "#0F172A",
-    fontWeight: "500",
-  },
-  iconButton: {
-    paddingHorizontal: 12,
-    paddingVertical: 12,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-
-  // Button
-  button: {
-    backgroundColor: "#0369A1",
-    paddingVertical: 14,
-    borderRadius: 12,
-    alignItems: "center",
-    marginTop: 12,
-    justifyContent: "center",
-    height: 50,
-    shadowColor: "#0369A1",
-    shadowOpacity: 0.25,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 4 },
-    elevation: 3,
-  },
-  buttonDisabled: {
-    opacity: 0.7,
-  },
-  buttonText: {
-    color: "#FFFFFF",
-    fontSize: 16,
-    fontWeight: "700",
-    letterSpacing: 0.5,
-  },
-
-  // Login Link
-  loginRow: {
-    flexDirection: "row",
-    justifyContent: "center",
-    alignItems: "center",
-    marginTop: 18,
-  },
-  loginText: {
-    fontSize: 14,
-    color: "#64748B",
-    fontWeight: "500",
-  },
-  loginLink: {
-    fontSize: 14,
-    fontWeight: "700",
-    color: "#0369A1",
-    textDecorationLine: "underline",
-    textDecorationColor: "#0369A1",
-  },
-
-  // Footer Info
-  footerInfo: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-    marginTop: 16,
-    paddingTop: 16,
-    borderTopWidth: 1,
-    borderTopColor: "#E2E8F0",
-  },
-  footerText: {
-    fontSize: 12,
-    color: "#6B7280",
-    fontWeight: "500",
-    flex: 1,
-  },
-});

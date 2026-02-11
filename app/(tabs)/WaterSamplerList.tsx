@@ -10,27 +10,13 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { collection, onSnapshot, query, orderBy } from "firebase/firestore";
-// @ts-ignore
 import { db } from "@/firebase.config";
 import { router } from "expo-router";
 import { useNavigation } from "@react-navigation/native";
-
-type SamplerStatus =
-  | "free"
-  | "scheduled"
-  | "taking_sample"
-  | "has_sample";
-
-interface WaterSampler {
-  id: string;
-  name: string;
-  address: string;
-  phone: string;
-  status: SamplerStatus;
-}
+import { SamplerInterface } from "@/src/interfaces";
 
 export default function WaterSamplersList() {
-  const [samplers, setSamplers] = useState<WaterSampler[]>([]);
+  const [samplers, setSamplers] = useState<SamplerInterface[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchText, setSearchText] = useState("");
 
@@ -42,9 +28,9 @@ export default function WaterSamplersList() {
     const unsubscribe = onSnapshot(
       q,
       (snapshot) => {
-        const data: WaterSampler[] = snapshot.docs.map((doc) => ({
+        const data: SamplerInterface[] = snapshot.docs.map((doc) => ({
           id: doc.id,
-          ...(doc.data() as Omit<WaterSampler, "id">),
+          ...(doc.data() as Omit<SamplerInterface, "id">),
         }));
 
         setSamplers(data);
@@ -67,32 +53,16 @@ export default function WaterSamplersList() {
     return unsubscribe;
   }, []);
 
-  const getStatusColor = (status: SamplerStatus) => {
-    switch (status.toLowerCase()) {
-      case "free":
-        return "#4CAF50";
-      case "scheduled":
-        return "#FFC107";
-      case "taking_sample":
-        return "#2196F3";
-      case "has_sample":
-        return "#9C27B0";
-      default:
-        return "#999";
-    }
-  };
-
   const filteredSamplers = useMemo(() => {
     const q = searchText.trim().toLowerCase();
     if (!q) return samplers;
 
-    const scoreSampler = (s: WaterSampler) => {
-      const id = (s.id ?? "").toLowerCase(); // treat as "number"
-      const phone = (s.phone ?? "").toLowerCase(); // also "number"-ish
+    const scoreSampler = (s: SamplerInterface) => {
+      const id = (s.id ?? "").toLowerCase();
+      const phone = (s.phone ?? "").toLowerCase();
       const name = (s.name ?? "").toLowerCase();
       const address = (s.address ?? "").toLowerCase();
 
-      // Order priority: number -> name -> address
       if (id.includes(q) || phone.includes(q)) return 3;
       if (name.includes(q)) return 2;
       if (address.includes(q)) return 1;
@@ -164,18 +134,6 @@ export default function WaterSamplersList() {
 
               <Text style={styles.label}>Address</Text>
               <Text>{item.address}</Text>
-
-              <View style={styles.statusRow}>
-                <View
-                  style={[
-                    styles.statusDot,
-                    { backgroundColor: getStatusColor(item.status) },
-                  ]}
-                />
-                <Text style={styles.statusText}>
-                  {item.status.replace("_", " ").toUpperCase()}
-                </Text>
-              </View>
             </Pressable>
           )}
         />
@@ -193,11 +151,6 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-  },
-  title: {
-    fontSize: 26,
-    fontWeight: "bold",
-    marginVertical: 16,
   },
   searchRow: {
     flexDirection: "row",
@@ -239,21 +192,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: "600",
     marginTop: 6,
-  },
-  statusRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginTop: 10,
-  },
-  statusDot: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-    marginRight: 8,
-  },
-  statusText: {
-    fontSize: 14,
-    fontWeight: "600",
   },
   button: {
     backgroundColor: "#47d16e",

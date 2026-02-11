@@ -29,6 +29,7 @@ export interface ErrorInterface {
 }
 
 export interface SamplerInterface {
+  id: string,
   name: string,
   address: string,
   status: string,

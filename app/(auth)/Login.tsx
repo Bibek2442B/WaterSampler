@@ -25,10 +25,8 @@ export default function Login() {
   const [isLoading, setIsLoading] = useState(false);
 
   const { login } = useAuth();
-  // const router = useRouter();
 
  const handleLogin = async () => {
-    // Validation
     if (!email.trim() || !password.trim()) {
       Alert.alert("Error", "Please enter both email and password");
       return;
@@ -38,13 +36,9 @@ export default function Login() {
 
     try {
       await login(email, password);
-      // Login successful - AuthContext will handle navigation via onAuthStateChanged
-      // router.replace("/(tabs)/WaterSamplerList");
-      // Alert.alert("Success", "Welcome back!");
     } catch (err: any) {
       console.error("Login error:", err);
       
-      // Handle specific error messages
       let errorMessage = "Login failed. Please try again.";
       
       if (err.message.includes("verify your email")) {
@@ -65,52 +59,6 @@ export default function Login() {
     }
   };
 
-  // const handleLogin = async () => {
-  //   if (!email || !password) {
-  //     Alert.alert("Email and password required");
-  //     return;
-  //   }
-
-  //   try {
-  //     // @ts-ignore
-  //     const cred = await signInWithEmailAndPassword(auth, email, password);
-
-  //     if (!cred.user.emailVerified) {
-  //       // @ts-ignore
-  //       await auth.signOut();
-  //       Alert.alert("Verify your email first");
-  //       return;
-  //     }
-
-  //     const userRef = doc(db, "users", cred.user.uid);
-  //     const snap = await getDoc(userRef);
-
-  //     if (!snap.exists()) {
-  //       // @ts-ignore
-  //       await auth.signOut();
-  //       Alert.alert("User data missing");
-  //       return;
-  //     }
-
-  //     const userData = snap.data();
-
-  //     if (!userData.emailVerified) {
-  //       await updateDoc(userRef, { emailVerified: true });
-  //     }
-
-  //     if (!userData.approvedByAdmin) {
-  //       // @ts-ignore
-  //       await auth.signOut();
-  //       Alert.alert("Waiting for admin approval");
-  //       return;
-  //     }
-
-  //     Alert.alert("Welcome!");
-  //   } catch (err: any) {
-  //     Alert.alert("Login error", err.message);
-  //   }
-  // };
-
   return (
     <View style={styles.safe}>
       <KeyboardAvoidingView
@@ -119,7 +67,6 @@ export default function Login() {
         keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 40}
       >
         <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
-          {/* Header Section */}
           <View style={styles.headerSection}>
             <View style={styles.iconContainer}>
               <Ionicons name="water" size={48} color="#0369A1" />
@@ -128,11 +75,9 @@ export default function Login() {
             <Text style={styles.appSubtitle}>Monitoring & Management System</Text>
           </View>
 
-          {/* Login Card */}
           <View style={styles.card}>
             <Text style={styles.title}>Sign In</Text>
 
-            {/* Email Field */}
             <View style={styles.field}>
               <View style={styles.labelRow}>
                 <Ionicons name="mail" size={14} color="#0369A1" />
@@ -152,7 +97,6 @@ export default function Login() {
               />
             </View>
 
-            {/* Password Field */}
             <View style={styles.field}>
               <View style={styles.labelRow}>
                 <Ionicons name="lock-closed" size={14} color="#0369A1" />
@@ -187,7 +131,6 @@ export default function Login() {
               </View>
             </View>
 
-            {/* Login Button */}
             <TouchableOpacity 
               style={[styles.button, isLoading && styles.buttonDisabled]} 
               onPress={handleLogin} 
@@ -201,9 +144,8 @@ export default function Login() {
               )}
             </TouchableOpacity>
 
-            {/* Register Link */}
             <View style={styles.registerRow}>
-              <Text style={styles.registerText}>Don't have an account? </Text>
+              <Text style={styles.registerText}>Don&#39;t have an account? </Text>
               <Link href="/Register" asChild>
                 <Pressable hitSlop={10} disabled={isLoading}>
                   <Text style={styles.registerLink}>Create one</Text>
@@ -211,7 +153,6 @@ export default function Login() {
               </Link>
             </View>
 
-            {/* Footer Info */}
             <View style={styles.footerInfo}>
               <Ionicons name="information-circle" size={14} color="#6B7280" />
               <Text style={styles.footerText}>Your account must be approved by admin</Text>
@@ -223,8 +164,7 @@ export default function Login() {
   );
 }
 
-const styles = StyleSheet.create({
-  // Background & Container
+export const styles = StyleSheet.create({
   safe: {
     flex: 1,
     backgroundColor: "#F0F9FF",
@@ -236,7 +176,6 @@ const styles = StyleSheet.create({
     paddingVertical: 40,
   },
 
-  // Header Section
   headerSection: {
     alignItems: "center",
     marginBottom: 40,
@@ -268,7 +207,6 @@ const styles = StyleSheet.create({
     letterSpacing: 0.3,
   },
 
-  // Card
   card: {
     backgroundColor: "#FFFFFF",
     borderRadius: 20,
@@ -282,7 +220,6 @@ const styles = StyleSheet.create({
     elevation: 4,
   },
 
-  // Typography
   title: {
     fontSize: 24,
     fontWeight: "800",
@@ -293,7 +230,6 @@ const styles = StyleSheet.create({
   },
   
 
-  // Fields
   field: {
     marginBottom: 18,
   },
@@ -310,7 +246,6 @@ const styles = StyleSheet.create({
     letterSpacing: 0.3,
   },
 
-  // Input Fields
   input: {
     borderWidth: 1.5,
     borderColor: "#CBD5E1",
@@ -347,7 +282,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
 
-  // Button
   button: {
     backgroundColor: "#0369A1",
     paddingVertical: 14,
@@ -372,7 +306,6 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
   },
 
-  // Register Link
   registerRow: {
     flexDirection: "row",
     justifyContent: "center",
@@ -392,7 +325,6 @@ const styles = StyleSheet.create({
     textDecorationColor: "#0369A1",
   },
 
-  // Footer Info
   footerInfo: {
     flexDirection: "row",
     alignItems: "center",
