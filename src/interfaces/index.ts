@@ -1,5 +1,6 @@
 import {Timestamp} from "@firebase/firestore";
 import {User} from "firebase/auth";
+import { DocumentData, QueryDocumentSnapshot } from "@firebase/firestore";
 
 export interface UserInterface {
   id: number;
@@ -46,4 +47,9 @@ export interface AuthContextInterface {
   login: (email: string, password: string) => Promise<void>;
   register: (name: string, email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
+}
+
+export interface SamplersPage {
+  samplers: SamplerInterface[];
+  lastDoc: QueryDocumentSnapshot<DocumentData> | null;
 }

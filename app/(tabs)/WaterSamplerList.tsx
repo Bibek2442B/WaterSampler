@@ -7,51 +7,67 @@ import {
   ActivityIndicator,
   Pressable,
   TextInput,
+  Image
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { collection, onSnapshot, query, orderBy } from "firebase/firestore";
-import { db } from "@/firebase.config";
 import { router } from "expo-router";
 import { useNavigation } from "@react-navigation/native";
+import { useInfiniteQuery } from "@tanstack/react-query";
+import { fetchSamplersPage } from "@/src/queries/samplers";
 import { SamplerInterface } from "@/src/interfaces";
+import {QueryDocumentSnapshot} from "firebase/firestore";
+import { SamplersPage} from "@/src/interfaces";
+import {DocumentData} from "@firebase/firestore";
+import {Ionicons} from "@expo/vector-icons";
 
 export default function WaterSamplersList() {
-  const [samplers, setSamplers] = useState<SamplerInterface[]>([]);
-  const [loading, setLoading] = useState(true);
   const [searchText, setSearchText] = useState("");
-
   const navigation = useNavigation();
 
+  const {
+    data,
+    isLoading,
+    isFetchingNextPage,
+    fetchNextPage,
+    hasNextPage,
+    error,
+  } = useInfiniteQuery<
+    SamplersPage,
+    Error,
+    SamplersPage,
+    string[],
+    QueryDocumentSnapshot<DocumentData> | null
+  >({
+    queryKey: ["waterSamplers"],
+    queryFn: ({ pageParam }) => fetchSamplersPage(pageParam),
+    initialPageParam: null,
+    getNextPageParam: (lastPage) => lastPage.lastDoc,
+  });
+
   useEffect(() => {
-    const q = query(collection(db, "waterSamplers"), orderBy("createdAt", "desc"));
-
-    const unsubscribe = onSnapshot(
-      q,
-      (snapshot) => {
-        const data: SamplerInterface[] = snapshot.docs.map((doc) => ({
-          id: doc.id,
-          ...(doc.data() as Omit<SamplerInterface, "id">),
-        }));
-
-        setSamplers(data);
-        setLoading(false);
-      },
-      (error) => {
-        console.error("Error fetching samplers:", error);
-        setLoading(false);
-      }
-    );
-
     navigation.setOptions({
       headerRight: () => (
-        <Pressable onPress={() => router.push("/AddNewSampler")} style={styles.button}>
-          <Text>+ New Sampler</Text>
+        <Pressable
+          onPress={() => router.push("/AddNewSampler")}
+          style={styles.button}
+        >
+          <Text style={{ color: "#fff", fontWeight: "600" }}>
+            + New Sampler
+          </Text>
         </Pressable>
       ),
+      headerLeft: () => (
+        <View style={styles.iconContainer}>
+          <Ionicons name="water" size={34} color="#0369A1" />
+        </View>
+      ),
     });
-
-    return unsubscribe;
   }, []);
+
+  const samplers = useMemo<SamplerInterface[]>(() => {
+    // @ts-ignore
+    return data?.pages.flatMap((page) => page.samplers) ?? [];
+  }, [data]);
 
   const filteredSamplers = useMemo(() => {
     const q = searchText.trim().toLowerCase();
@@ -72,14 +88,15 @@ export default function WaterSamplersList() {
     return samplers
       .map((s) => ({ s, score: scoreSampler(s) }))
       .filter((x) => x.score > 0)
-      .sort((a, b) => {
-        if (b.score !== a.score) return b.score - a.score; // higher priority first
-        return (a.s.name ?? "").localeCompare(b.s.name ?? ""); // stable-ish tie-breaker
-      })
+      .sort((a, b) =>
+        b.score !== a.score
+          ? b.score - a.score
+          : (a.s.name ?? "").localeCompare(b.s.name ?? "")
+      )
       .map((x) => x.s);
   }, [samplers, searchText]);
 
-  if (loading) {
+  if (isLoading) {
     return (
       <SafeAreaView style={styles.center}>
         <ActivityIndicator size="large" />
@@ -87,10 +104,10 @@ export default function WaterSamplersList() {
     );
   }
 
-  if (samplers.length === 0) {
+  if (error) {
     return (
       <SafeAreaView style={styles.center}>
-        <Text>No water samplers found</Text>
+        <Text>Failed to load samplers</Text>
       </SafeAreaView>
     );
   }
@@ -114,34 +131,33 @@ export default function WaterSamplersList() {
         )}
       </View>
 
-      {filteredSamplers.length === 0 ? (
-        <SafeAreaView style={styles.center}>
-          <Text>No matches for “{searchText.trim()}”</Text>
-        </SafeAreaView>
-      ) : (
-        <FlatList
-          data={filteredSamplers}
-          keyExtractor={(item) => item.id}
-          contentContainerStyle={{ paddingVertical: 10 }}
-          renderItem={({ item }) => (
-            <Pressable
-              style={styles.card}
-              onPress={(_) => {
-                router.push(`/sampler/${item.id}`);
-              }}
-            >
-              <Text style={styles.name}>{item.name}</Text>
-
-              <Text style={styles.label}>Address</Text>
-              <Text>{item.address}</Text>
-            </Pressable>
-          )}
-        />
-      )}
+      <FlatList
+        data={filteredSamplers}
+        keyExtractor={(item) => item.id}
+        contentContainerStyle={{ paddingVertical: 10 }}
+        onEndReached={() => {
+          if (hasNextPage && !isFetchingNextPage) {
+            fetchNextPage();
+          }
+        }}
+        onEndReachedThreshold={0.3}
+        ListFooterComponent={
+          isFetchingNextPage ? <ActivityIndicator /> : null
+        }
+        renderItem={({ item }) => (
+          <Pressable
+            style={styles.card}
+            onPress={() => router.push(`/sampler/${item.id}`)}
+          >
+            <Text style={styles.name}>{item.name}</Text>
+            <Text style={styles.label}>Address</Text>
+            <Text>{item.address}</Text>
+          </Pressable>
+        )}
+      />
     </View>
   );
 }
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -195,8 +211,21 @@ const styles = StyleSheet.create({
   },
   button: {
     backgroundColor: "#47d16e",
-    padding: 15,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
     borderRadius: 10,
+  },
+  iconContainer: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: "#E0F2FE",
+    justifyContent: "center",
     alignItems: "center",
+    shadowColor: "#0369A1",
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 3,
   },
 });
