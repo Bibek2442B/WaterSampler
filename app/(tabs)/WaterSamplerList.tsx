@@ -56,11 +56,6 @@ export default function WaterSamplersList() {
           </Text>
         </Pressable>
       ),
-      headerLeft: () => (
-        <View style={styles.iconContainer}>
-          <Ionicons name="water" size={34} color="#0369A1" />
-        </View>
-      ),
     });
   }, []);
 
