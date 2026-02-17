@@ -1,7 +1,6 @@
 import {Ionicons} from "@expo/vector-icons";
 import { Redirect, Tabs} from "expo-router";
 import { useAuth } from "@/context/AuthContext";
-import { StyleSheet, View } from "react-native";
 
 export default function TabsLayout() {
   const { user, loading } = useAuth();
@@ -53,16 +52,4 @@ export default function TabsLayout() {
   );
 }
 
-const styles = StyleSheet.create({
-  iconContainer: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: "#E0F2FE",
-    justifyContent: "center",
-    alignItems: "center",
-    shadowColor: "#0369A1",
-    shadowOpacity: 0.15,
-  }
-})
 

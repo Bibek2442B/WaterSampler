@@ -1,6 +1,6 @@
-import { View, Text, StyleSheet, Button } from "react-native";
+import { View, Text, StyleSheet, Button, Alert } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { doc, getDoc } from "firebase/firestore";
+import { doc, getDoc, deleteDoc } from "firebase/firestore";
 import { db } from "@/firebase.config";
 import { useEffect, useState } from "react";
 import { useNavigation } from "@react-navigation/native";
@@ -18,6 +18,9 @@ export default function SamplerDetails() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const [sampler, setSampler] = useState<Sampler | null>(null);
+
+
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const navigation = useNavigation();
 
@@ -42,6 +45,33 @@ export default function SamplerDetails() {
     });
   }, [sampler]);
 
+  const handleDelete = () => {
+    if (!id || isDeleting) return;
+
+    Alert.alert(
+      "Delete sampler?",
+      "This will permanently delete this water sampler.",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Delete",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              setIsDeleting(true);
+              await deleteDoc(doc(db, "waterSamplers", id));
+              router.replace("/(tabs)/WaterSamplerList");
+            } catch (e) {
+              Alert.alert("Delete failed", "Please try again.");
+            } finally {
+              setIsDeleting(false);
+            }
+          },
+        },
+      ]
+    );
+  };
+
   const getStatusStyle = (status: string) => {
     switch ((status || "").toLowerCase()) {
       case "free":
@@ -62,6 +92,9 @@ export default function SamplerDetails() {
   if (!sampler) {
     return <Text style={{ padding: 20 }}>Loading...</Text>;
   }
+
+  const canManage =
+    userDoc?.role === "OPERATOR" || userDoc?.role === "ADMIN";
 
   return (
     <View style={styles.container}>
@@ -87,7 +120,7 @@ export default function SamplerDetails() {
         </View>
       </View>
 
-      {sampler.status === "Free" && (userDoc?.role === "OPERATOR" || userDoc?.role === "ADMIN" ) && (
+      {sampler.status === "Free" && canManage && (
         <Button
           title="Schedule Sampler"
           onPress={() =>
@@ -104,7 +137,21 @@ export default function SamplerDetails() {
       )}
 
       {sampler.status === "Scheduled" && (
-        <Button title="Edit Schedule" onPress={() => router.push(`/sampler/${id}Schedule`)} />
+        <Button
+          title="Edit Schedule"
+          onPress={() => router.push(`/sampler/${id}Schedule`)}
+        />
+      )}
+
+      {canManage && (
+        <View style={{ marginTop: 12 }}>
+          <Button
+            title={isDeleting ? "Deleting..." : "Delete Sampler"}
+            color="#D32F2F"
+            disabled={isDeleting}
+            onPress={handleDelete}
+          />
+        </View>
       )}
     </View>
   );

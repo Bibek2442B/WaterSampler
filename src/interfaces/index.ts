@@ -33,7 +33,7 @@ export interface SamplerInterface {
   id: string,
   name: string,
   address: string,
-  status: string,
+  status: "FREE" | "SCHEDULED" | "TAKING_SAMPLE" | "HAS_SAMPLE" | "ERROR",
   phone: string,
   schedule?: ScheduleInterface,
   runtime?: RuntimeInterface,

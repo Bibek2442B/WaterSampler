@@ -8,9 +8,7 @@ import {
   ActivityIndicator,
   Alert,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
 import { addDoc, collection, serverTimestamp } from "firebase/firestore";
-// @ts-ignore
 import { db } from "@/firebase.config";
 import {router} from "expo-router";
 
@@ -42,7 +40,6 @@ export default function AddWaterSampler() {
       setName("");
       setAddress("");
       setPhone("");
-      // @ts-ignore
       router.replace("/WaterSamplerList");
     } catch (error) {
       console.error("Error creating sampler:", error);
