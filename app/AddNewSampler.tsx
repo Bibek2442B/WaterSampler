@@ -15,11 +15,11 @@ import {router} from "expo-router";
 export default function AddWaterSampler() {
   const [name, setName] = useState("");
   const [address, setAddress] = useState("");
-  const [phone, setPhone] = useState("");
+  const [ip, setIp] = useState("");
   const [loading, setLoading] = useState(false);
 
   const handleCreateSampler = async () => {
-    if (!name || !address || !phone) {
+    if (!name || !address || !ip) {
       Alert.alert("Error", "All fields are required");
       return;
     }
@@ -30,16 +30,15 @@ export default function AddWaterSampler() {
       await addDoc(collection(db, "waterSamplers"), {
         name,
         address,
-        phone,
+        ip,
         status: "Free",
-        createdAt: serverTimestamp(),
       });
 
       Alert.alert("Success", "Water sampler created successfully");
 
       setName("");
       setAddress("");
-      setPhone("");
+      setIp("");
       router.replace("/WaterSamplerList");
     } catch (error) {
       console.error("Error creating sampler:", error);
@@ -68,13 +67,12 @@ export default function AddWaterSampler() {
         multiline
       />
 
-      <Text style={styles.label}>Phone Number</Text>
+      <Text style={styles.label}>IP Address</Text>
       <TextInput
         style={styles.input}
-        placeholder="Enter phone number"
-        keyboardType="phone-pad"
-        value={phone}
-        onChangeText={setPhone}
+        placeholder="Enter IP Address"
+        value={ip}
+        onChangeText={setIp}
       />
 
       {loading ? (
