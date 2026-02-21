@@ -4,6 +4,7 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import {DateTimePickerAndroid} from "@react-native-community/datetimepicker";
 import { doc, updateDoc, Timestamp } from "firebase/firestore";
 import { db } from "@/firebase.config";
+import {Picker} from '@react-native-picker/picker';
 
 import {
   ScheduleInterface,
@@ -15,6 +16,8 @@ export default function ScheduleSampler() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
 
+  const [week,setWeek] = useState(0);
+  const [day, setDay] = useState(0);
   const [date, setDate] = useState<Date>(new Date());
   const [time, setTime] = useState<Date>(new Date());
   const [bursts, setBursts] = useState("");
@@ -22,6 +25,7 @@ export default function ScheduleSampler() {
   const [loading, setLoading] = useState(false);
 
   const {userDoc} = useAuth();
+
 
   const opentDatePickerAndroid = () => {
     if(Platform.OS === 'android'){
@@ -69,6 +73,23 @@ export default function ScheduleSampler() {
       return;
     }
 
+    if (week<1 || week>4) {
+      Alert.alert("Please select week of month");
+      return;
+    }
+    if (day<1 || day>7) {
+      Alert.alert("Please select day of week");
+      return;
+    }
+    if(parseInt(bursts)<1 || parseInt(bursts)>20) {
+      Alert.alert("Number of samples must be between 1 and 20");
+      return;
+    }
+    if(parseInt(intervalMinutes)<10 || parseInt(intervalMinutes)>140) {
+      Alert.alert("Interval must be between 10 and 140 minutes");
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -100,12 +121,36 @@ export default function ScheduleSampler() {
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Schedule Sampler</Text>
-
       <View style={styles.field}>
-        <Text>Date</Text>
-        <TouchableOpacity style={styles.input} onPress={opentDatePickerAndroid}>
-          <Text>{date.toDateString()}</Text>
-        </TouchableOpacity>
+        <Text>Week of Month</Text>
+        <Picker
+          selectedValue={week}
+          onValueChange={(itemValue)=>setWeek(itemValue)}
+          mode="dropdown"
+        >
+          <Picker.Item label="Select Week of Month" value="0" style={{color: "#888"}} />
+          <Picker.Item label="1st Week of Month" value="1" />
+          <Picker.Item label="2nd Week of Month" value="2" />
+          <Picker.Item label="3rd Week of Month" value="3" />
+          <Picker.Item label="4th Week of Month" value="4" />
+        </Picker>
+      </View>
+      <View style={styles.field}>
+        <Text>Day of Week</Text>
+        <Picker
+          selectedValue={day}
+          onValueChange={(itemValue)=>setDay(itemValue)}
+          mode="dropdown"
+        >
+          <Picker.Item label="Select Day of Week" value="0" style={{color: "#888"}} />
+          <Picker.Item label="Sunday" value="1" />
+          <Picker.Item label="Monday" value="2" />
+          <Picker.Item label="Tuesday" value="3" />
+          <Picker.Item label="Wednesday" value="4" />
+          <Picker.Item label="Thursday" value="5" />
+          <Picker.Item label="Friday" value="6" />
+          <Picker.Item label="Saturday" value="7" />
+        </Picker>
       </View>
 
       <View style={styles.field}>
@@ -117,36 +162,28 @@ export default function ScheduleSampler() {
         </TouchableOpacity>
       </View>
 
-      {/*{showPicker && (*/}
-      {/*  <DateTimePicker*/}
-      {/*    value={date}*/}
-      {/*    mode="datetime"*/}
-      {/*    display="default"*/}
-      {/*    minimumDate={new Date()}*/}
-      {/*    onChange={(_, selectedDate) => {*/}
-      {/*      setShowPicker(false);*/}
-      {/*      if (selectedDate) setDate(selectedDate);*/}
-      {/*    }}*/}
-      {/*  />*/}
-      {/*)}*/}
+      <View style={styles.field}>
+        <Text>Number of Samples</Text>
+        <TextInput
+          placeholder="From 1 - 20"
+          keyboardType="numeric"
+          style={styles.input}
+          value={bursts}
+          onChangeText={setBursts}
+        />
+      </View>
 
-      {/* Bursts */}
-      <TextInput
-        placeholder="Number of bursts"
-        keyboardType="numeric"
-        style={styles.input}
-        value={bursts}
-        onChangeText={setBursts}
-      />
+      <View style={styles.field}>
+        <Text>Interval in Minutes</Text>
+        <TextInput
+          placeholder="From 10 - 140 minutes"
+          keyboardType="numeric"
+          style={styles.input}
+          value={intervalMinutes}
+          onChangeText={setIntervalMinutes}
+        />
+      </View>
 
-      {/* Interval */}
-      <TextInput
-        placeholder="Interval minutes"
-        keyboardType="numeric"
-        style={styles.input}
-        value={intervalMinutes}
-        onChangeText={setIntervalMinutes}
-      />
 
       <TouchableOpacity
         style={styles.button}
