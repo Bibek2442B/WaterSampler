@@ -22,6 +22,8 @@ export default function SamplerDetails() {
     queryKey: ["sampler", id] as [string, string],
     queryFn: SamplerMachine,
     enabled: !!id,
+    retry: 3,
+    retryDelay: 2000,
   })
 
   useEffect(() => {
