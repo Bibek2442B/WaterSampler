@@ -30,10 +30,11 @@ export interface ErrorInterface {
 }
 
 export interface SamplerInterface {
+  id: string,
   name: string,
   address: string,
-  status: "FREE" | "SCHEDULED" | "TAKING_SAMPLE" | "HAS_SAMPLE" | "ERROR",
   ip: string,
+  status: "FREE" | "SCHEDULED" | "TAKING_SAMPLE" | "HAS_SAMPLE" | "ERROR",
   schedule?: ScheduleInterface,
   error?: ErrorInterface,
 }

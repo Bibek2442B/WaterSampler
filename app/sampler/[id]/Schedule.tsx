@@ -1,11 +1,10 @@
 import {View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, Platform} from "react-native";
 import { useState } from "react";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import RNDateTimePicker, {DateTimePickerAndroid} from "@react-native-community/datetimepicker";
+import {DateTimePickerAndroid} from "@react-native-community/datetimepicker";
 import { doc, updateDoc, Timestamp } from "firebase/firestore";
 import { db } from "@/firebase.config";
 
-// Interfaces
 import {
   ScheduleInterface,
   UserInterface
@@ -18,7 +17,6 @@ export default function ScheduleSampler() {
 
   const [date, setDate] = useState<Date>(new Date());
   const [time, setTime] = useState<Date>(new Date());
-  // const [showPicker, setShowPicker] = useState(false);
   const [bursts, setBursts] = useState("");
   const [intervalMinutes, setIntervalMinutes] = useState("");
   const [loading, setLoading] = useState(false);
@@ -43,6 +41,7 @@ export default function ScheduleSampler() {
       DateTimePickerAndroid.open({
         value: time,
         mode: "time",
+        display: "spinner",
         onChange: (_, selectedTime)=> {
           if(selectedTime) setTime(selectedTime);
         },

@@ -5,49 +5,42 @@ import { db } from "@/firebase.config";
 import { useEffect, useState } from "react";
 import { useNavigation } from "@react-navigation/native";
 import { useAuth } from "@/context/AuthContext";
+import {useQuery} from "@tanstack/react-query";
+import {SamplerInterface} from "@/src/interfaces";
+import {SamplerMachine} from "@/src/queries/SamplerMachine";
 
 type Sampler = {
   name: string;
   address: string;
   status: string;
-  phone: string;
+  ip: string;
   schedule?: string;
 };
 
 export default function SamplerDetails() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
-  const [sampler, setSampler] = useState<Sampler | null>(null);
-
-
   const [isDeleting, setIsDeleting] = useState(false);
-
   const navigation = useNavigation();
-
   const { userDoc } = useAuth();
 
-  useEffect(() => {
-    const fetchSampler = async () => {
-      if (!id) return;
-      const docRef = doc(db, "waterSamplers", id);
-      const snap = await getDoc(docRef);
-      if (snap.exists()) {
-        setSampler(snap.data() as Sampler);
-      }
-    };
 
-    fetchSampler();
-  }, [id]);
+
+  const {data, isLoading, error} = useQuery<SamplerInterface, Error, SamplerInterface, string[]>({
+    queryKey: ["sampler", id] as [string, string],
+    queryFn: SamplerMachine,
+    enabled: !!id,
+  })
 
   useEffect(() => {
     navigation.setOptions({
-      headerTitle: sampler?.name || "Water Sampler",
+      headerTitle: data?.name || "Water Sampler",
     });
-  }, [sampler]);
+    console.log(data);
+  }, [data]);
 
   const handleDelete = () => {
     if (!id || isDeleting) return;
-
     Alert.alert(
       "Delete sampler?",
       "This will permanently delete this water sampler.",
@@ -72,16 +65,14 @@ export default function SamplerDetails() {
     );
   };
 
-  const getStatusStyle = (status: string) => {
+  const getStatusStyle = (status?: string) => {
     switch ((status || "").toLowerCase()) {
       case "free":
         return styles.statusFree;
       case "scheduled":
         return styles.statusScheduled;
-      case "taking_sample":
       case "taking sample":
         return styles.statusTakingSample;
-      case "has_sample":
       case "has sample":
         return styles.statusHasSample;
       default:
@@ -89,7 +80,7 @@ export default function SamplerDetails() {
     }
   };
 
-  if (!sampler) {
+  if (isLoading) {
     return <Text style={{ padding: 20 }}>Loading...</Text>;
   }
 
@@ -101,26 +92,26 @@ export default function SamplerDetails() {
       <View style={styles.card}>
         <View style={styles.row}>
           <Text style={styles.label}>Address</Text>
-          <Text style={styles.value}>{sampler.address}</Text>
+          <Text style={styles.value}>{data?.address}</Text>
         </View>
 
         <View style={styles.row}>
-          <Text style={styles.label}>Phone</Text>
-          <Text style={styles.value}>{sampler.phone}</Text>
+          <Text style={styles.label}>IP Address</Text>
+          <Text style={styles.value}>{data?.ip}</Text>
         </View>
 
         <View style={[styles.row, styles.rowLast]}>
           <Text style={styles.label}>Status</Text>
           <View style={styles.statusPill}>
-            <View style={[styles.statusDot, getStatusStyle(sampler.status)]} />
+            <View style={[styles.statusDot, getStatusStyle(data?.status)]} />
             <Text style={[styles.statusText]}>
-              {String(sampler.status).replaceAll("_", " ").toUpperCase()}
+              {String(data?.status).replaceAll("_", " ").toUpperCase()}
             </Text>
           </View>
         </View>
       </View>
 
-      {sampler.status === "Free" && canManage && (
+      {data?.status === "FREE" && canManage && (
         <Button
           title="Schedule Sampler"
           onPress={() =>
@@ -128,15 +119,15 @@ export default function SamplerDetails() {
               pathname: `/sampler/[id]/Schedule`,
               params: {
                 id: id,
-                name: sampler.name,
-                status: sampler.status,
+                name: data.name,
+                status: data.status,
               },
             })
           }
         />
       )}
 
-      {sampler.status === "Scheduled" && (
+      {data?.status === "SCHEDULED" && (
         <Button
           title="Edit Schedule"
           onPress={() => router.push(`/sampler/${id}Schedule`)}
@@ -175,7 +166,7 @@ export const styles = StyleSheet.create({
     borderRadius: 12,
     padding: 16,
     marginBottom: 20,
-    elevation: 3, // Android shadow
+    elevation: 3,
   },
 
   row: {

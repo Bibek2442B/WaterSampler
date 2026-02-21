@@ -32,7 +32,6 @@ export default function UserRequestPage() {
     const q = query(
       collection(db, "users"),
       where("approvedByAdmin", "==", false ),
-      // where("emailVerified", "==", true)
     );
     const unsub = onSnapshot(
       q,

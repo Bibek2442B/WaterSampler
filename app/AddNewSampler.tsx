@@ -8,7 +8,7 @@ import {
   ActivityIndicator,
   Alert,
 } from "react-native";
-import { addDoc, collection, serverTimestamp } from "firebase/firestore";
+import { addDoc, collection } from "firebase/firestore";
 import { db } from "@/firebase.config";
 import {router} from "expo-router";
 
@@ -28,10 +28,10 @@ export default function AddWaterSampler() {
       setLoading(true);
 
       await addDoc(collection(db, "waterSamplers"), {
-        name,
-        address,
-        ip,
-        status: "Free",
+        name: name.trim(),
+        address: address.trim(),
+        ip: ip.trim(),
+        status: "FREE",
       });
 
       Alert.alert("Success", "Water sampler created successfully");

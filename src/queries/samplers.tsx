@@ -18,7 +18,7 @@ export async function fetchSamplersPage(
 ) {
   const baseQuery = query(
     collection(db, "waterSamplers"),
-    orderBy("createdAt", "desc"),
+    orderBy("name", "asc"),
     limit(PAGE_SIZE)
   );
 

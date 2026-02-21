@@ -7,18 +7,15 @@ import {
   ActivityIndicator,
   Pressable,
   TextInput,
-  Image
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { router } from "expo-router";
 import { useNavigation } from "@react-navigation/native";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { fetchSamplersPage } from "@/src/queries/samplers";
-import { SamplerInterface } from "@/src/interfaces";
+import { SamplerInterface, SamplersPage } from "@/src/interfaces";
 import {QueryDocumentSnapshot} from "firebase/firestore";
-import { SamplersPage} from "@/src/interfaces";
 import {DocumentData} from "@firebase/firestore";
-import {Ionicons} from "@expo/vector-icons";
 
 export default function WaterSamplersList() {
   const [searchText, setSearchText] = useState("");
@@ -70,11 +67,11 @@ export default function WaterSamplersList() {
 
     const scoreSampler = (s: SamplerInterface) => {
       const id = (s.id ?? "").toLowerCase();
-      const phone = (s.phone ?? "").toLowerCase();
+      const ip = (s.ip ?? "").toLowerCase();
       const name = (s.name ?? "").toLowerCase();
       const address = (s.address ?? "").toLowerCase();
 
-      if (id.includes(q) || phone.includes(q)) return 3;
+      if (id.includes(q) || ip.includes(q)) return 3;
       if (name.includes(q)) return 2;
       if (address.includes(q)) return 1;
       return 0;
