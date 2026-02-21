@@ -9,14 +9,10 @@ export async function SamplerMachine({queryKey}: QueryFunctionContext<string[]>)
   const snapshot = await getDoc(docRef);
 
   const sampler: SamplerInterface = {id:snapshot.id, ...(snapshot.data() as Omit<SamplerInterface, "id">)}
-  try{
-    console.log(sampler.ip);
-    const res = await fetch(`http://${sampler.ip}:3000/`);
-    const samplerState = await res.json();
-    sampler.status = samplerState.status;
-    sampler.schedule = samplerState.schedule;
-  }catch(e){
-    console.log(e);
-  }
+  console.log(sampler.ip);
+  const res = await fetch(`http://${sampler.ip}:3000/`);
+  const samplerState = await res.json();
+  sampler.status = samplerState.status;
+  sampler.schedule = samplerState.schedule;
   return sampler;
 }

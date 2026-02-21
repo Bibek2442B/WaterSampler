@@ -1,6 +1,6 @@
-import { View, Text, StyleSheet, Button, Alert } from "react-native";
+import { View, Text, StyleSheet, Button, Alert, ActivityIndicator, TouchableOpacity } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { doc, getDoc, deleteDoc } from "firebase/firestore";
+import { doc, deleteDoc } from "firebase/firestore";
 import { db } from "@/firebase.config";
 import { useEffect, useState } from "react";
 import { useNavigation } from "@react-navigation/native";
@@ -8,14 +8,6 @@ import { useAuth } from "@/context/AuthContext";
 import {useQuery} from "@tanstack/react-query";
 import {SamplerInterface} from "@/src/interfaces";
 import {SamplerMachine} from "@/src/queries/SamplerMachine";
-
-type Sampler = {
-  name: string;
-  address: string;
-  status: string;
-  ip: string;
-  schedule?: string;
-};
 
 export default function SamplerDetails() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -26,7 +18,7 @@ export default function SamplerDetails() {
 
 
 
-  const {data, isLoading, error} = useQuery<SamplerInterface, Error, SamplerInterface, string[]>({
+  const {data, isLoading, error, refetch} = useQuery<SamplerInterface, Error, SamplerInterface, string[]>({
     queryKey: ["sampler", id] as [string, string],
     queryFn: SamplerMachine,
     enabled: !!id,
@@ -36,7 +28,6 @@ export default function SamplerDetails() {
     navigation.setOptions({
       headerTitle: data?.name || "Water Sampler",
     });
-    console.log(data);
   }, [data]);
 
   const handleDelete = () => {
@@ -81,7 +72,38 @@ export default function SamplerDetails() {
   };
 
   if (isLoading) {
-    return <Text style={{ padding: 20 }}>Loading...</Text>;
+    return (
+      <View style={styles.loadingContainer}>
+        <View style={styles.card}>
+          <ActivityIndicator size="large" color="#007AFF" />
+          <Text style={styles.loadingText}>Connecting to Sampler...</Text>
+        </View>
+      </View>
+    );
+  }
+
+  if (error) {
+    return (
+      <View style={styles.errorContainer}>
+        <View style={styles.errorIconCircle}>
+          <Text style={{ fontSize: 40 }}>⚠️</Text>
+        </View>
+
+        <Text style={styles.errorTitle}>Connection Failed</Text>
+
+        <Text style={styles.errorMessage}>
+          Could not reach the sampler at {data?.ip || 'the specified IP'}.
+          Ensure you are on the same WiFi network.
+        </Text>
+
+        <TouchableOpacity
+          style={styles.retryButton}
+          onPress={() => refetch()}
+        >
+          <Text style={styles.retryButtonText}>Try Again</Text>
+        </TouchableOpacity>
+      </View>
+    );
   }
 
   const canManage =
@@ -280,5 +302,51 @@ export const styles = StyleSheet.create({
     textAlign: "center",
     marginTop: 20,
     fontSize: 16,
+  },
+  loadingText: {
+    marginTop: 15,
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#1d1d1f',
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 30,
+    backgroundColor: '#fff',
+  },
+  errorIconCircle: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: '#FFF1F0', // Light red
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  errorTitle: {
+    fontSize: 22,
+    fontWeight: '700',
+    color: '#D32F2F', // Error Red
+    marginBottom: 10,
+  },
+  errorMessage: {
+    fontSize: 16,
+    color: '#4B4B4B',
+    textAlign: 'center',
+    lineHeight: 22,
+    marginBottom: 30,
+  },
+  retryButton: {
+    backgroundColor: '#007AFF',
+    paddingVertical: 12,
+    paddingHorizontal: 30,
+    borderRadius: 12,
+  },
+  retryButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
   },
 });

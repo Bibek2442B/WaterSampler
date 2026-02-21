@@ -19,24 +19,13 @@ export interface ScheduleInterface {
   intervalMinutes: number,
 }
 
-export interface RuntimeInterface {
-  startTime: Timestamp,
-  endTime: Timestamp,
-}
-
-export interface ErrorInterface {
-  hasError: boolean,
-  errorMessage?: string,
-}
-
 export interface SamplerInterface {
   id: string,
   name: string,
   address: string,
   ip: string,
-  status: "FREE" | "SCHEDULED" | "TAKING_SAMPLE" | "HAS_SAMPLE" | "ERROR",
+  status?: "FREE" | "SCHEDULED" | "TAKING_SAMPLE" | "HAS_SAMPLE" | "ERROR",
   schedule?: ScheduleInterface,
-  error?: ErrorInterface,
 }
 
 export interface AuthContextInterface {

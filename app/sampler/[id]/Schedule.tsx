@@ -22,7 +22,6 @@ export default function ScheduleSampler() {
 
   const [week,setWeek] = useState(0);
   const [day, setDay] = useState(0);
-  const [date, setDate] = useState<Date>(new Date());
   const [time, setTime] = useState<Date>(new Date());
   const [bursts, setBursts] = useState("");
   const [intervalMinutes, setIntervalMinutes] = useState("");
@@ -44,20 +43,7 @@ export default function ScheduleSampler() {
     console.log(data);
   }, [data]);
 
-  const opentDatePickerAndroid = () => {
-    if(Platform.OS === 'android'){
-      DateTimePickerAndroid.open({
-        value: date,
-        mode: "date",
-        minimumDate: new Date(),
-        onChange: (_, selectedDate)=> {
-          if(selectedDate) setDate(selectedDate);
-        },
-      })
-    }
-  }
-
-  const opentTimePickerAndroid = () => {
+  const openTimePickerAndroid = () => {
     if(Platform.OS === 'android'){
       DateTimePickerAndroid.open({
         value: time,
@@ -71,7 +57,8 @@ export default function ScheduleSampler() {
   }
 
   const combineDateTime = () => {
-    const combined = new Date(date);
+    const combined = new Date(time);
+
     combined.setHours(time.getHours());
     combined.setMinutes(time.getMinutes());
     combined.setSeconds(0);
@@ -172,7 +159,7 @@ export default function ScheduleSampler() {
 
       <View style={styles.field}>
         <Text>Time</Text>
-        <TouchableOpacity style={styles.input} onPress={opentTimePickerAndroid}>
+        <TouchableOpacity style={styles.input} onPress={openTimePickerAndroid}>
           <Text>
             {time.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
           </Text>
