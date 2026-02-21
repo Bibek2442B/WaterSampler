@@ -1,4 +1,4 @@
-import {View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, Platform} from "react-native";
+import {View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, Platform, ActivityIndicator} from "react-native";
 import {useEffect, useState} from "react";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import {DateTimePickerAndroid} from "@react-native-community/datetimepicker";
@@ -30,7 +30,7 @@ export default function ScheduleSampler() {
   const navigation = useNavigation();
   const {userDoc} = useAuth();
 
-  const {data, isLoading, error} = useQuery<SamplerInterface, Error, SamplerInterface, string[]>({
+  const {data, isLoading, error, refetch} = useQuery<SamplerInterface, Error, SamplerInterface, string[]>({
     queryKey: ["sampler", id] as [string, string],
     queryFn: SamplerMachine,
     enabled: !!id,
@@ -40,7 +40,6 @@ export default function ScheduleSampler() {
     navigation.setOptions({
       headerTitle: data?.name || "Water Sampler",
     });
-    console.log(data);
   }, [data]);
 
   const openTimePickerAndroid = () => {
@@ -121,6 +120,41 @@ export default function ScheduleSampler() {
       setLoading(false);
     }
   };
+
+  if (isLoading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <View style={styles.card}>
+          <ActivityIndicator size="large" color="#007AFF" />
+          <Text style={styles.loadingText}>Connecting to Sampler...</Text>
+        </View>
+      </View>
+    );
+  }
+
+  if (error) {
+    return (
+      <View style={styles.errorContainer}>
+        <View style={styles.errorIconCircle}>
+          <Text style={{ fontSize: 40 }}>⚠️</Text>
+        </View>
+
+        <Text style={styles.errorTitle}>Connection Failed</Text>
+
+        <Text style={styles.errorMessage}>
+          Could not reach the sampler at {data?.ip || 'the specified IP'}.
+          Ensure you are on the same WiFi network.
+        </Text>
+
+        <TouchableOpacity
+          style={styles.retryButton}
+          onPress={() => refetch()}
+        >
+          <Text style={styles.retryButtonText}>Try Again</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
@@ -234,5 +268,71 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontWeight: "bold",
     fontSize: 16,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+
+  errorText: {
+    color: "red",
+    textAlign: "center",
+    marginTop: 20,
+    fontSize: 16,
+  },
+  loadingText: {
+    marginTop: 15,
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#1d1d1f',
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 30,
+    backgroundColor: '#fff',
+  },
+  errorIconCircle: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: '#FFF1F0', // Light red
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  errorTitle: {
+    fontSize: 22,
+    fontWeight: '700',
+    color: '#D32F2F', // Error Red
+    marginBottom: 10,
+  },
+  errorMessage: {
+    fontSize: 16,
+    color: '#4B4B4B',
+    textAlign: 'center',
+    lineHeight: 22,
+    marginBottom: 30,
+  },
+  retryButton: {
+    backgroundColor: '#007AFF',
+    paddingVertical: 12,
+    paddingHorizontal: 30,
+    borderRadius: 12,
+  },
+  retryButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+
+  card: {
+    backgroundColor: "#f9f9f9",
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 20,
+    elevation: 3,
   },
 });

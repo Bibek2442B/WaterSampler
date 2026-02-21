@@ -12,7 +12,6 @@ export async function SamplerMachine({queryKey}: QueryFunctionContext<string[]>)
   const timeoutId = setTimeout(() => controller.abort(), 1000);
 
   const sampler: SamplerInterface = {id:snapshot.id, ...(snapshot.data() as Omit<SamplerInterface, "id">)}
-  console.log(sampler.ip);
   const res = await fetch(`http://${sampler.ip}:3000/`,{signal: controller.signal});
   clearTimeout(timeoutId);
   const samplerState = await res.json();
