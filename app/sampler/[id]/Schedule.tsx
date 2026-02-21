@@ -1,5 +1,5 @@
 import {View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, Platform} from "react-native";
-import { useState } from "react";
+import {useEffect, useState} from "react";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import {DateTimePickerAndroid} from "@react-native-community/datetimepicker";
 import { doc, updateDoc, Timestamp } from "firebase/firestore";
@@ -7,10 +7,14 @@ import { db } from "@/firebase.config";
 import {Picker} from '@react-native-picker/picker';
 
 import {
+  SamplerInterface,
   ScheduleInterface,
   UserInterface
 } from "@/src/interfaces";
 import {useAuth} from "@/context/AuthContext";
+import {useQuery} from "@tanstack/react-query";
+import {SamplerMachine} from "@/src/queries/SamplerMachine";
+import {useNavigation} from "@react-navigation/native";
 
 export default function ScheduleSampler() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -24,8 +28,21 @@ export default function ScheduleSampler() {
   const [intervalMinutes, setIntervalMinutes] = useState("");
   const [loading, setLoading] = useState(false);
 
+  const navigation = useNavigation();
   const {userDoc} = useAuth();
 
+  const {data, isLoading, error} = useQuery<SamplerInterface, Error, SamplerInterface, string[]>({
+    queryKey: ["sampler", id] as [string, string],
+    queryFn: SamplerMachine,
+    enabled: !!id,
+  })
+
+  useEffect(() => {
+    navigation.setOptions({
+      headerTitle: data?.name || "Water Sampler",
+    });
+    console.log(data);
+  }, [data]);
 
   const opentDatePickerAndroid = () => {
     if(Platform.OS === 'android'){
