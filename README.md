@@ -35,10 +35,19 @@
    ```bash
    npm install
    ```
-3. Start the app
+3. Start the application
    ```bash
    npm run web
    ```
+4. Open the application on Expo App or Android Studio! 
+
+5. As of now it is necessary to create a express server to simulate communication with sampler. To do so you can run the project from express folder seperately.
+
+6. Install Node on your device to run express server.
+   Command to run express server:
+   ```bash
+   npm install
+   node device.js
+   ```
    
-# Install the latest Android APK build [here](https://expo.dev/accounts/bibek2442b/projects/WaterSampler/builds/a754d6fa-4077-4ffb-b777-02c66f6c9eb6)
 
