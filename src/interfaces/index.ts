@@ -13,10 +13,11 @@ export interface UserInterface {
 }
 
 export interface ScheduleInterface {
-  scheduledBy: UserInterface,
-  startTime: Timestamp,
+  scheduledAt: Timestamp,
   bursts: number,
   intervalMinutes: number,
+  volume: number,
+  endsAt: Timestamp,
 }
 
 export interface SamplerInterface {

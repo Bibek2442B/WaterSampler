@@ -9,7 +9,7 @@ export async function SamplerMachine({queryKey}: QueryFunctionContext<string[]>)
   const snapshot = await getDoc(docRef);
 
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 1000);
+  const timeoutId = setTimeout(() => controller.abort(), 3000);
 
   const sampler: SamplerInterface = {id:snapshot.id, ...(snapshot.data() as Omit<SamplerInterface, "id">)}
   const res = await fetch(`http://${sampler.ip}:3000/`,{signal: controller.signal});
