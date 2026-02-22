@@ -101,30 +101,36 @@ export default function UserAdminPage() {
     }
   };
 
-  const renderItem = ({ item }: { item: any }) => (
-    <View style={styles.row}>
-      <View style={styles.info}>
-        <Text style={styles.name}>{item.name || "(No name)"}</Text>
-        <Text style={styles.email}>{item.email}</Text>
-        <Text style={styles.role}>Role: {item.role}</Text>
-      </View>
+  const renderItem = ({ item }: { item: any }) => {
+    const isSelf = !!user && item.id === user.uid;
+    const isAdminUser = item.role === "ADMIN";
+    const hideButton = isSelf || isAdminUser;
 
-      <View style={styles.actions}>
-        {updatingId === item.id ? (
-          <ActivityIndicator />
-        ) : (
-          <TouchableOpacity
-            style={[styles.button, { backgroundColor: item.role === "OPERATOR" ? "#D32F2F" : "#4CAF50" }]}
-            onPress={() => confirmChangeRole(item.id, item.role)}
-          >
-            <Text style={styles.buttonText}>
-              {item.role === "OPERATOR" ? "Demote" : "Promote"}
-            </Text>
-          </TouchableOpacity>
-        )}
+    return (
+      <View style={styles.row}>
+        <View style={styles.info}>
+          <Text style={styles.name}>{item.name || "(No name)"}</Text>
+          <Text style={styles.email}>{item.email}</Text>
+          <Text style={styles.role}>Role: {item.role}</Text>
+        </View>
+
+        <View style={styles.actions}>
+          {updatingId === item.id ? (
+            <ActivityIndicator />
+          ) : hideButton ? null : (
+            <TouchableOpacity
+              style={[styles.button, { backgroundColor: item.role === "OPERATOR" ? "#D32F2F" : "#4CAF50" }]}
+              onPress={() => confirmChangeRole(item.id, item.role)}
+            >
+              <Text style={styles.buttonText}>
+                {item.role === "OPERATOR" ? "Demote" : "Promote"}
+              </Text>
+            </TouchableOpacity>
+          )}
+        </View>
       </View>
-    </View>
-  );
+    );
+  };
 
   return (
     <View style={styles.container}>
