@@ -29,7 +29,7 @@ export default function UserAdminPage() {
   const [roleFilter, setRoleFilter] =
     useState<"ALL" | "OPERATOR" | "USER">("ALL");
 
-  // 🔹 Same pattern as WaterSamplersList
+  // Same pattern as WaterSamplersList
   const { data, isLoading, error } = useQuery<
     UsersPage,
     Error
