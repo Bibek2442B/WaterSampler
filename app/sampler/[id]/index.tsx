@@ -166,7 +166,7 @@ export default function SamplerDetails() {
         />
       )}
 
-      {canManage && (
+      {userDoc?.role==="ADMIN" && (
         <View style={{ marginTop: 12 }}>
           <Button
             title={isDeleting ? "Deleting..." : "Delete Sampler"}
