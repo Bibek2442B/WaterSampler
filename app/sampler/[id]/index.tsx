@@ -124,6 +124,13 @@ export default function SamplerDetails() {
           <Text style={styles.value}>{data?.ip}</Text>
         </View>
 
+        {data?.status === "SCHEDULED" &&
+          <View style={styles.row}>
+            <Text style={styles.label}>Schedule</Text>
+            <Text style={styles.value}>{(data?.schedule?.scheduledAt.toString())}</Text>
+          </View>
+        }
+
         <View style={[styles.row, styles.rowLast]}>
           <Text style={styles.label}>Status</Text>
           <View style={styles.statusPill}>
@@ -133,7 +140,8 @@ export default function SamplerDetails() {
             </Text>
           </View>
         </View>
-      </View>
+
+        </View>
 
       {data?.status === "FREE" && canManage && (
         <Button
