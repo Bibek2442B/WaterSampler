@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React from "react";
 import {
   View,
   Text,
@@ -10,46 +10,39 @@ import {
 } from "react-native";
 import { Redirect } from "expo-router";
 import { useAuth } from "@/context/AuthContext";
-import { db } from "@/firebase.config";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+
 import {
-  collection,
-  onSnapshot,
-  query,
-  where,
-  updateDoc,
-  deleteDoc,
-  doc,
-} from "firebase/firestore";
+  fetchPendingUsers,
+  acceptUserRequest,
+  declineUserRequest,
+  PendingUser,
+} from "@/src/queries/userRequests";
 
 export default function UserRequestPage() {
   const { user, userDoc, loading } = useAuth();
-  const [pendingUsers, setPendingUsers] = useState<any[]>([]);
-  const [processingId, setProcessingId] = useState<string | null>(null);
-  const [listLoading, setListLoading] = useState(true);
+  const queryClient = useQueryClient();
 
-  useEffect(() => {
-    // Query for users not yet approved
-    const q = query(
-      collection(db, "users"),
-      where("approvedByAdmin", "==", false ),
-    );
-    const unsub = onSnapshot(
-      q,
-      (snap) => {
-        const data = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
-        setPendingUsers(data as any[]);
-        setListLoading(false);
-      },
-      (err) => {
-        console.error("Pending users listener error:", err);
-        setListLoading(false);
-      }
-    );
+  // Fetch pending users
+  const { data, isLoading, error } = useQuery({
+    queryKey: ["pendingUsers"],
+    queryFn: fetchPendingUsers,
+  });
 
-    return () => unsub();
-  }, []);
+  const acceptMutation = useMutation({
+  mutationFn: (userId: string) => acceptUserRequest(userId),
+  onSuccess: () => {
+    queryClient.invalidateQueries({ queryKey: ["pendingUsers"] });
+  },
+});
 
-  if (loading || listLoading) {
+const declineMutation = useMutation({
+  mutationFn: (userId: string) => declineUserRequest(userId),
+  onSuccess: () => {
+    queryClient.invalidateQueries({ queryKey: ["pendingUsers"] });
+  },
+});
+  if (loading || isLoading) {
     return (
       <View style={styles.center}>
         <ActivityIndicator size="large" />
@@ -57,103 +50,120 @@ export default function UserRequestPage() {
     );
   }
 
-  // Only allow ADMIN
+  if (error) {
+    return (
+      <View style={styles.center}>
+        <Text>Failed to load requests</Text>
+      </View>
+    );
+  }
+
   if (!user || !userDoc || userDoc.role !== "ADMIN") {
     return <Redirect href="/(tabs)/WaterSamplerList" />;
   }
 
-  const acceptRequest = async (userId: string) => {
-    try {
-      setProcessingId(userId);
-      const ref = doc(db, "users", userId);
-      await updateDoc(ref, { approvedByAdmin: true });
-      Alert.alert("Success", "User request accepted!");
-    } catch (err) {
-      console.error("Accept error:", err);
-      Alert.alert("Error", "Failed to accept request. Try again.");
-    } finally {
-      setProcessingId(null);
-    }
-  };
+  const pendingUsers: PendingUser[] = data?.users ?? [];
 
-  const declineRequest = async (userId: string) => {
-    try {
-      setProcessingId(userId);
-      const ref = doc(db, "users", userId);
-      await deleteDoc(ref);
-      Alert.alert("Success", "User request declined!");
-    } catch (err) {
-      console.error("Decline error:", err);
-      Alert.alert("Error", "Failed to decline request. Try again.");
-    } finally {
-      setProcessingId(null);
-    }
-  };
+ const confirmAction = (userId: string, action: "accept" | "decline") => {
+  const title =
+    action === "accept" ? "Accept Request" : "Decline Request";
 
-  const confirmAction = (userId: string, action: "accept" | "decline") => {
-    const title = action === "accept" ? "Accept Request" : "Decline Request";
-    const message =
-      action === "accept"
-        ? "Accept this user's registration request?"
-        : "Decline this user's registration request?";
+  const message =
+    action === "accept"
+      ? "Accept this user's registration request?"
+      : "Decline this user's registration request?";
 
-    Alert.alert(title, message, [
-      { text: "Cancel", style: "cancel" },
-      {
-        text: action === "accept" ? "Accept" : "Decline",
-        style: action === "decline" ? "destructive" : "default",
-        onPress: () =>
-          action === "accept"
-            ? acceptRequest(userId)
-            : declineRequest(userId),
+  Alert.alert(title, message, [
+    { text: "Cancel", style: "cancel" },
+    {
+      text: action === "accept" ? "Accept" : "Decline",
+      style: action === "decline" ? "destructive" : "default",
+      onPress: async () => {
+        try {
+          if (action === "accept") {
+            await acceptMutation.mutateAsync(userId);
+            Alert.alert("Success", "User request accepted!");
+          } else {
+            await declineMutation.mutateAsync(userId);
+            Alert.alert("Success", "User request declined!");
+          }
+        } catch {
+          Alert.alert("Error", "Operation failed. Try again.");
+        }
       },
-    ]);
-  };
-
-  const renderItem = ({ item }: { item: any }) => (
-    <View style={styles.row}>
-      <View style={styles.info}>
-        <Text style={styles.name}>{item.name || "(No name)"}</Text>
-        <Text style={styles.email}>{item.email}</Text>
-        <Text style={styles.registered}>
-          Registered: {item.createdAt?.toDate?.()?.toLocaleDateString() || "N/A"}
-        </Text>
-      </View>
-
-      <View style={styles.actions}>
-        {processingId === item.id ? (
-          <ActivityIndicator />
-        ) : (
-          <>
-            <TouchableOpacity
-              style={styles.acceptButton}
-              onPress={() => confirmAction(item.id, "accept")}
-            >
-              <Text style={styles.buttonText}>Accept</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.declineButton}
-              onPress={() => confirmAction(item.id, "decline")}
-            >
-              <Text style={styles.buttonText}>Decline</Text>
-            </TouchableOpacity>
-          </>
-        )}
-      </View>
-    </View>
-  );
+    },
+  ]);
+};
 
   return (
     <View style={styles.container}>
       <FlatList
         data={pendingUsers}
         keyExtractor={(i) => i.id}
-        renderItem={renderItem}
-        ItemSeparatorComponent={() => <View style={styles.separator} />}
         contentContainerStyle={{ paddingBottom: 40 }}
+        ItemSeparatorComponent={() => (
+          <View style={styles.separator} />
+        )}
         ListEmptyComponent={
-          <Text style={styles.emptyText}>No pending requests</Text>
+          <Text style={styles.emptyText}>
+            No pending requests
+          </Text>
         }
+        renderItem={({ item }) => {
+          const isProcessing =
+            (acceptMutation.isPending &&
+              acceptMutation.variables === item.id) ||
+            (declineMutation.isPending &&
+              declineMutation.variables === item.id);
+
+          return (
+            <View style={styles.row}>
+              <View style={styles.info}>
+                <Text style={styles.name}>
+                  {item.name || "(No name)"}
+                </Text>
+                <Text style={styles.email}>
+                  {item.email}
+                </Text>
+                <Text style={styles.registered}>
+                  Registered:{" "}
+                  {item.createdAt?.toDate?.()?.toLocaleDateString() ||
+                    "N/A"}
+                </Text>
+              </View>
+
+              <View style={styles.actions}>
+                {isProcessing ? (
+                  <ActivityIndicator />
+                ) : (
+                  <>
+                    <TouchableOpacity
+                      style={styles.acceptButton}
+                      onPress={() =>
+                        confirmAction(item.id, "accept")
+                      }
+                    >
+                      <Text style={styles.buttonText}>
+                        Accept
+                      </Text>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
+                      style={styles.declineButton}
+                      onPress={() =>
+                        confirmAction(item.id, "decline")
+                      }
+                    >
+                      <Text style={styles.buttonText}>
+                        Decline
+                      </Text>
+                    </TouchableOpacity>
+                  </>
+                )}
+              </View>
+            </View>
+          );
+        }}
       />
     </View>
   );

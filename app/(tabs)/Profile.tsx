@@ -59,7 +59,7 @@ export default function ProfileScreen() {
 
             <Pressable
                 style={styles.primaryButton}
-                // onPress={() => router.push("/profile/edit")}
+                onPress={() => router.push("/EditProfile")}
             >
                 <Text style={styles.primaryButtonText}>Edit Profile</Text>
             </Pressable>
