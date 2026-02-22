@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useMemo, useState } from "react";
 import {
   View,
   Text,
@@ -11,43 +11,53 @@ import {
 } from "react-native";
 import { Redirect } from "expo-router";
 import { useAuth } from "@/context/AuthContext";
-import { db } from "@/firebase.config";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+
 import {
-  collection,
-  onSnapshot,
-  query,
-  orderBy,
-  updateDoc,
-  doc,
-} from "firebase/firestore";
+  fetchUsers,
+  updateUserRole,
+  UserInterface,
+  UsersPage,
+  UserRole,
+} from "@/src/queries/users";
 
 export default function UserAdminPage() {
   const { user, userDoc, loading } = useAuth();
-  const [users, setUsers] = useState<any[]>([]);
-  const [updatingId, setUpdatingId] = useState<string | null>(null);
-  const [listLoading, setListLoading] = useState(true);
+  const queryClient = useQueryClient();
+
   const [searchText, setSearchText] = useState("");
-  const [roleFilter, setRoleFilter] = useState<"ALL" | "OPERATOR" | "USER">("ALL");
+  const [roleFilter, setRoleFilter] =
+    useState<"ALL" | "OPERATOR" | "USER">("ALL");
 
-  useEffect(() => {
-    const q = query(collection(db, "users"), orderBy("createdAt", "desc"));
-    const unsub = onSnapshot(
-      q,
-      (snap) => {
-        const data = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
-        setUsers(data as any[]);
-        setListLoading(false);
-      },
-      (err) => {
-        console.error("Users listener error:", err);
-        setListLoading(false);
-      }
-    );
+  // 🔹 Same pattern as WaterSamplersList
+  const { data, isLoading, error } = useQuery<
+    UsersPage,
+    Error
+  >({
+    queryKey: ["users"],
+    queryFn: fetchUsers,
+  });
 
-    return () => unsub();
-  }, []);
+  const mutation = useMutation({
+    mutationFn: ({
+      userId,
+      newRole,
+    }: {
+      userId: string;
+      newRole: UserRole;
+    }) => updateUserRole(userId, newRole),
 
-  if (loading || listLoading) {
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["users"] });
+      Alert.alert("Success", "Role updated successfully");
+    },
+
+    onError: () => {
+      Alert.alert("Error", "Failed to update role.");
+    },
+  });
+
+  if (loading || isLoading) {
     return (
       <View style={styles.center}>
         <ActivityIndicator size="large" />
@@ -55,163 +65,162 @@ export default function UserAdminPage() {
     );
   }
 
-  // Only allow ADMIN
+  if (error) {
+    return (
+      <View style={styles.center}>
+        <Text>Failed to load users</Text>
+      </View>
+    );
+  }
+
   if (!user || !userDoc || userDoc.role !== "ADMIN") {
     return <Redirect href="/(tabs)/WaterSamplerList" />;
   }
 
-  // Filter users based on search and role
-  const filteredUsers = users.filter((u) => {
-    const matchesSearch =
-      u.name?.toLowerCase().includes(searchText.toLowerCase()) ||
-      u.email?.toLowerCase().includes(searchText.toLowerCase());
-    const matchesRole = roleFilter === "ALL" || u.role === roleFilter;
-    return matchesSearch && matchesRole && u.approvedByAdmin; 
-  });
+  // Just like samplers flattening logic
+  const users: UserInterface[] = data?.users ?? [];
 
-  const confirmChangeRole = (targetId: string, currentRole: string) => {
+  const filteredUsers = useMemo(() => {
+    const q = searchText.trim().toLowerCase();
+    if (!q && roleFilter === "ALL") return users;
+
+    return users.filter((u) => {
+      if (!u.approvedByAdmin) return false;
+
+      const matchesSearch =
+        !q ||
+        u.name?.toLowerCase().includes(q) ||
+        u.email?.toLowerCase().includes(q);
+
+      const matchesRole =
+        roleFilter === "ALL" || u.role === roleFilter;
+
+      return matchesSearch && matchesRole;
+    });
+  }, [users, searchText, roleFilter]);
+
+  const confirmChangeRole = (
+    targetId: string,
+    currentRole: UserRole
+  ) => {
     if (targetId === user.uid) {
-      Alert.alert("Action not allowed", "You cannot change your own role.");
+      Alert.alert(
+        "Action not allowed",
+        "You cannot change your own role."
+      );
       return;
     }
 
     const promote = currentRole !== "OPERATOR";
-    const title = promote ? "Promote to Operator" : "Demote to Viewer";
-    const message = promote
-      ? "Promote this user to Operator?"
-      : "Demote this operator to Viewer?";
 
-    Alert.alert(title, message, [
-      { text: "Cancel", style: "cancel" },
-      { text: "OK", onPress: () => changeRole(targetId, promote ? "OPERATOR" : "USER") },
-    ]);
-  };
-
-  const changeRole = async (targetId: string, newRole: string) => {
-    try {
-      setUpdatingId(targetId);
-      const ref = doc(db, "users", targetId);
-      await updateDoc(ref, { role: newRole });
-      Alert.alert("Success", `Role updated to ${newRole}`);
-    } catch (err) {
-      console.error("Update role error:", err);
-      Alert.alert("Error", "Failed to update role. Try again.");
-    } finally {
-      setUpdatingId(null);
-    }
-  };
-
-  const renderItem = ({ item }: { item: any }) => {
-    const isSelf = !!user && item.id === user.uid;
-    const isAdminUser = item.role === "ADMIN";
-    const hideButton = isSelf || isAdminUser;
-
-    return (
-      <View style={styles.row}>
-        <View style={styles.info}>
-          <Text style={styles.name}>{item.name || "(No name)"}</Text>
-          <Text style={styles.email}>{item.email}</Text>
-          <Text style={styles.role}>Role: {item.role}</Text>
-        </View>
-
-        <View style={styles.actions}>
-          {updatingId === item.id ? (
-            <ActivityIndicator />
-          ) : hideButton ? null : (
-            <TouchableOpacity
-              style={[styles.button, { backgroundColor: item.role === "OPERATOR" ? "#D32F2F" : "#4CAF50" }]}
-              onPress={() => confirmChangeRole(item.id, item.role)}
-            >
-              <Text style={styles.buttonText}>
-                {item.role === "OPERATOR" ? "Demote" : "Promote"}
-              </Text>
-            </TouchableOpacity>
-          )}
-        </View>
-      </View>
+    Alert.alert(
+      promote ? "Promote to Operator" : "Demote to Viewer",
+      promote
+        ? "Promote this user to Operator?"
+        : "Demote this operator to Viewer?",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "OK",
+          onPress: () =>
+            mutation.mutate({
+              userId: targetId,
+              newRole: promote ? "OPERATOR" : "USER",
+            }),
+        },
+      ]
     );
   };
 
   return (
     <View style={styles.container}>
-      {/* Search Bar */}
       <TextInput
         style={styles.searchBar}
         placeholder="Search by name or email..."
-        placeholderTextColor="#999"
         value={searchText}
         onChangeText={setSearchText}
       />
 
-      {/* Role Filter Buttons */}
       <View style={styles.filterRow}>
-        <TouchableOpacity
-          style={[
-            styles.filterButton,
-            roleFilter === "ALL" && styles.filterButtonActive,
-          ]}
-          onPress={() => setRoleFilter("ALL")}
-        >
-          <Text
+        {["ALL", "OPERATOR", "USER"].map((role) => (
+          <TouchableOpacity
+            key={role}
             style={[
-              styles.filterButtonText,
-              roleFilter === "ALL" && styles.filterButtonTextActive,
+              styles.filterButton,
+              roleFilter === role && styles.filterButtonActive,
             ]}
+            onPress={() =>
+              setRoleFilter(role as "ALL" | "OPERATOR" | "USER")
+            }
           >
-            All
-          </Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={[
-            styles.filterButton,
-            roleFilter === "OPERATOR" && styles.filterButtonActive,
-          ]}
-          onPress={() => setRoleFilter("OPERATOR")}
-        >
-          <Text
-            style={[
-              styles.filterButtonText,
-              roleFilter === "OPERATOR" && styles.filterButtonTextActive,
-            ]}
-          >
-            Operator
-          </Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={[
-            styles.filterButton,
-            roleFilter === "USER" && styles.filterButtonActive,
-          ]}
-          onPress={() => setRoleFilter("USER")}
-        >
-          <Text
-            style={[
-              styles.filterButtonText,
-              roleFilter === "USER" && styles.filterButtonTextActive,
-            ]}
-          >
-            Viewer
-          </Text>
-        </TouchableOpacity>
+            <Text
+              style={[
+                styles.filterButtonText,
+                roleFilter === role &&
+                  styles.filterButtonTextActive,
+              ]}
+            >
+              {role === "USER"
+                ? "Viewer"
+                : role === "OPERATOR"
+                ? "Operator"
+                : "All"}
+            </Text>
+          </TouchableOpacity>
+        ))}
       </View>
 
-      {/* Users List */}
       <FlatList
         data={filteredUsers}
         keyExtractor={(i) => i.id}
-        renderItem={renderItem}
-        ItemSeparatorComponent={() => <View style={styles.separator} />}
         contentContainerStyle={{ paddingBottom: 40 }}
-        ListEmptyComponent={
-          <Text style={styles.emptyText}>No users found</Text>
-        }
+        renderItem={({ item }) => {
+          const isSelf = item.id === user.uid;
+          const isAdminUser = item.role === "ADMIN";
+          const hideButton = isSelf || isAdminUser;
+
+          return (
+            <View style={styles.row}>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.name}>
+                  {item.name || "(No name)"}
+                </Text>
+                <Text>{item.email}</Text>
+                <Text>Role: {item.role}</Text>
+              </View>
+
+              {mutation.isPending &&
+              mutation.variables?.userId === item.id ? (
+                <ActivityIndicator />
+              ) : hideButton ? null : (
+                <TouchableOpacity
+                  style={[
+                    styles.button,
+                    {
+                      backgroundColor:
+                        item.role === "OPERATOR"
+                          ? "#D32F2F"
+                          : "#4CAF50",
+                    },
+                  ]}
+                  onPress={() =>
+                    confirmChangeRole(item.id, item.role)
+                  }
+                >
+                  <Text style={styles.buttonText}>
+                    {item.role === "OPERATOR"
+                      ? "Demote"
+                      : "Promote"}
+                  </Text>
+                </TouchableOpacity>
+              )}
+            </View>
+          );
+        }}
       />
     </View>
   );
 }
-
 const styles = StyleSheet.create({
   container: { flex: 1, padding: 16, backgroundColor: "#fff" },
   center: { flex: 1, justifyContent: "center", alignItems: "center" },
