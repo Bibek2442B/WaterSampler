@@ -159,10 +159,18 @@ export default function SamplerDetails() {
         />
       )}
 
-      {data?.status === "SCHEDULED" && (
+      {data?.status === "SCHEDULED" && canManage && (
         <Button
           title="Edit Schedule"
-          onPress={() => router.push(`/sampler/${id}Schedule`)}
+          onPress={() => router.push({
+            pathname: `/sampler/[id]/Schedule`,
+            params: {
+              id: id,
+              name: data.name,
+              status: data.status,
+            },
+          })
+        }
         />
       )}
 

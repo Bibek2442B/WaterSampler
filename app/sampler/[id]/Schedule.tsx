@@ -49,6 +49,9 @@ export default function ScheduleSampler() {
     navigation.setOptions({
       headerTitle: data?.name || "Water Sampler",
     });
+    if(data?.status === "SCHEDULED") {
+      router.back();
+    }
   }, [data]);
 
   const openTimePickerAndroid = () => {
