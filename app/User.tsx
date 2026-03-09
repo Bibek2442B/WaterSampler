@@ -27,9 +27,8 @@ export default function UserAdminPage() {
 
   const [searchText, setSearchText] = useState("");
   const [roleFilter, setRoleFilter] =
-    useState<"ALL" | "OPERATOR" | "USER">("ALL");
+    useState<"ALL" | "OPERATOR" | "VIEWER">("ALL");
 
-  // Same pattern as WaterSamplersList
   const { data, isLoading, error } = useQuery<
     UsersPage,
     Error
@@ -77,7 +76,6 @@ export default function UserAdminPage() {
     return <Redirect href="/(tabs)/WaterSamplerList" />;
   }
 
-  // Just like samplers flattening logic
   const users: UserInterface[] = data?.users ?? [];
 
   const filteredUsers = useMemo(() => {
@@ -125,7 +123,7 @@ export default function UserAdminPage() {
           onPress: () =>
             mutation.mutate({
               userId: targetId,
-              newRole: promote ? "OPERATOR" : "USER",
+              newRole: promote ? "OPERATOR" : "VIEWER",
             }),
         },
       ]
@@ -150,7 +148,7 @@ export default function UserAdminPage() {
               roleFilter === role && styles.filterButtonActive,
             ]}
             onPress={() =>
-              setRoleFilter(role as "ALL" | "OPERATOR" | "USER")
+              setRoleFilter(role as "ALL" | "OPERATOR" | "VIEWER")
             }
           >
             <Text

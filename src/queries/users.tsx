@@ -12,7 +12,7 @@ export interface UsersPage {
   users: UserInterface[];
 }
 
-export type UserRole = "ADMIN" | "OPERATOR" | "USER";
+export type UserRole = "ADMIN" | "OPERATOR" | "VIEWER";
 
 export interface UserInterface {
   id: string;

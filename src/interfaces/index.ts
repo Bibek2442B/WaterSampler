@@ -3,7 +3,7 @@ import {User} from "firebase/auth";
 import { DocumentData, QueryDocumentSnapshot } from "@firebase/firestore";
 
 export interface UserInterface {
-  id: number;
+  id: string;
   name: string;
   email: string;
   role: "ADMIN" | "OPERATOR" | "VIEWER";

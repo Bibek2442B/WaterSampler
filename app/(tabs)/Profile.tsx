@@ -64,11 +64,11 @@ export default function ProfileScreen() {
                 <Text style={styles.primaryButtonText}>Edit Profile</Text>
             </Pressable>
             
-            {userDoc?.role === "ADMIN" && ( 
+            {userDoc?.role === "ADMIN" && (
                 <>
                     <Pressable
                         style={styles.primaryButton}
-                        onPress={() => router.push("/User")}
+                        onPress={() => router.push("/UserManagement")}
                     >
                         <Text style={styles.primaryButtonText}>User Management</Text>
                     </Pressable>
