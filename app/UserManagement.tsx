@@ -4,13 +4,13 @@ import {
   ActivityIndicator,
   FlatList,
   TouchableOpacity,
-  Alert, StyleSheet,
+  Alert, StyleSheet, TextInput,
 } from "react-native";
 import {useAuth} from "@/context/AuthContext";
 import {router} from "expo-router";
 import {useQuery} from "@tanstack/react-query";
 import {fetchUsers} from "@/src/queries/UserQuery";
-import {useEffect, useState} from "react";
+import React, {useEffect, useState} from "react";
 import {UserInterface} from "@/src/interfaces";
 
 export default function UserManagement() {
@@ -22,8 +22,23 @@ export default function UserManagement() {
   const [searchText, setSearchText] = useState("");
   const [filteredData, setFilteredData] = useState<UserInterface[] | undefined>(data);
   useEffect(()=>{
-
+    const s = searchText.trim().toLowerCase()
+    if(data){
+      const users = data.filter((user)=>(user.name.toLowerCase().includes(s))||user.email.toLowerCase().includes(s))
+      setFilteredData(users)
+    }
   },[data,searchText])
+  if(error){
+    return(
+      <>
+        <View style={styles.container}>
+          <Text>
+            Failed to load users
+          </Text>
+        </View>
+      </>
+    );
+  }
   if (loading || isLoading) {
     return <ActivityIndicator size="large" />;
   }
@@ -34,8 +49,14 @@ export default function UserManagement() {
 
   return (
     <View style={styles.container}>
+      <TextInput
+        style={styles.searchBar}
+        placeholder="Search by name or email..."
+        value={searchText}
+        onChangeText={setSearchText}
+      />
       <FlatList
-        data = {data}
+        data = {filteredData}
         keyExtractor={(item) => item.id}
         renderItem={({item})=>(
           <Text>
