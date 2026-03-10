@@ -1,51 +1,136 @@
+import React, { useMemo, useState } from "react";
 import {
   View,
   Text,
-  ActivityIndicator,
   FlatList,
   TouchableOpacity,
-  Alert, StyleSheet, TextInput,
+  Alert,
+  ActivityIndicator,
+  StyleSheet,
+  TextInput,
 } from "react-native";
-import {useAuth} from "@/context/AuthContext";
-import {router} from "expo-router";
-import {useQuery} from "@tanstack/react-query";
-import {fetchUsers} from "@/src/queries/UserQuery";
-import React, {useEffect, useState} from "react";
-import {UserInterface} from "@/src/interfaces";
+import { Redirect } from "expo-router";
+import { useAuth } from "@/context/AuthContext";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
-export default function UserManagement() {
-  const {data, isLoading, error} = useQuery({
-    queryKey: ["users"],
-    queryFn: () => fetchUsers(),
-  })
-  const {user, userDoc, loading} = useAuth();
+import {
+  fetchUsers,
+  updateUserRole,
+  UserInterface,
+  UsersPage,
+  UserRole,
+} from "@/src/queries/users";
+
+export default function UserAdminPage() {
+  const { user, userDoc, loading } = useAuth();
+  const queryClient = useQueryClient();
+
   const [searchText, setSearchText] = useState("");
-  const [filteredData, setFilteredData] = useState<UserInterface[] | undefined>(data);
-  useEffect(()=>{
-    const s = searchText.trim().toLowerCase()
-    if(data){
-      const users = data.filter((user)=>(user.name.toLowerCase().includes(s))||user.email.toLowerCase().includes(s))
-      setFilteredData(users)
-    }
-  },[data,searchText])
-  if(error){
-    return(
-      <>
-        <View style={styles.container}>
-          <Text>
-            Failed to load users
-          </Text>
-        </View>
-      </>
+  const [roleFilter, setRoleFilter] =
+    useState<"ALL" | "OPERATOR" | "VIEWER">("ALL");
+
+  const { data, isLoading, error } = useQuery<
+    UsersPage,
+    Error
+  >({
+    queryKey: ["users"],
+    queryFn: fetchUsers,
+  });
+
+  const mutation = useMutation({
+    mutationFn: ({
+      userId,
+      newRole,
+    }: {
+      userId: string;
+      newRole: UserRole;
+    }) => updateUserRole(userId, newRole),
+
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["users"] });
+      Alert.alert("Success", "Role updated successfully");
+    },
+
+    onError: () => {
+      Alert.alert("Error", "Failed to update role.");
+    },
+  });
+
+  const users: UserInterface[] = data?.users?.filter((u)=>(u.role!=="ADMIN")) ?? [];
+
+  const filteredUsers = useMemo(() => {
+    const q = searchText.trim().toLowerCase();
+    if (!q && roleFilter === "ALL") return users;
+
+    return users.filter((u) => {
+      if (!u.approvedByAdmin) return false;
+
+      const matchesSearch =
+        !q ||
+        u.name?.toLowerCase().includes(q) ||
+        u.email?.toLowerCase().includes(q);
+
+      const matchesRole =
+        roleFilter === "ALL" || u.role === roleFilter;
+
+      return matchesSearch && matchesRole;
+    });
+  }, [users, searchText, roleFilter]);
+
+  if (loading || isLoading) {
+    return (
+      <View style={styles.center}>
+        <ActivityIndicator size="large" />
+      </View>
     );
   }
-  if (loading || isLoading) {
-    return <ActivityIndicator size="large" />;
-  }
-  if (!user || !userDoc || userDoc.role !== "ADMIN") {
-    router.replace("/(tabs)/Profile");
+
+  if (error) {
+    return (
+      <View style={styles.center}>
+        <Text>Failed to load users</Text>
+      </View>
+    );
   }
 
+  if (!user || !userDoc || userDoc.role !== "ADMIN") {
+    return <Redirect href="/(tabs)/WaterSamplerList" />;
+  }
+
+
+
+  const confirmChangeRole = (
+    targetId: string,
+    currentRole: UserRole
+  ) => {
+    if (targetId === user.uid) {
+      Alert.alert(
+        "Action not allowed",
+        "You cannot change your own role."
+      );
+      return;
+    }
+
+    const promote = currentRole !== "OPERATOR";
+
+    Alert.alert(
+      promote ? "Promote to Operator" : "Demote to Viewer",
+      promote
+        ? "Promote this user to Operator?"
+        : "Demote this operator to Viewer?",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "OK",
+          onPress: () =>
+            mutation.mutate({
+              userId: targetId,
+              newRole: promote ? "OPERATOR" : "VIEWER",
+            }),
+        },
+      ]
+    );
+  };
 
   return (
     <View style={styles.container}>
@@ -55,19 +140,87 @@ export default function UserManagement() {
         value={searchText}
         onChangeText={setSearchText}
       />
+
+      <View style={styles.filterRow}>
+        {["ALL", "OPERATOR", "USER"].map((role) => (
+          <TouchableOpacity
+            key={role}
+            style={[
+              styles.filterButton,
+              roleFilter === role && styles.filterButtonActive,
+            ]}
+            onPress={() =>
+              setRoleFilter(role as "ALL" | "OPERATOR" | "VIEWER")
+            }
+          >
+            <Text
+              style={[
+                styles.filterButtonText,
+                roleFilter === role &&
+                  styles.filterButtonTextActive,
+              ]}
+            >
+              {role === "USER"
+                ? "Viewer"
+                : role === "OPERATOR"
+                ? "Operator"
+                : "All"}
+            </Text>
+          </TouchableOpacity>
+        ))}
+      </View>
+
       <FlatList
-        data = {filteredData}
-        keyExtractor={(item) => item.id}
-        renderItem={({item})=>(
-          <Text>
-            {item.name}
-          </Text>
-        )}
+        data={filteredUsers}
+        keyExtractor={(i) => i.id}
+        contentContainerStyle={{ paddingBottom: 40 }}
+        renderItem={({ item }) => {
+          const isSelf = item.id === user.uid;
+          const isAdminUser = item.role === "ADMIN";
+          const hideButton = isSelf || isAdminUser;
+
+          return (
+            <View style={styles.row}>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.name}>
+                  {item.name || "(No name)"}
+                </Text>
+                <Text>{item.email}</Text>
+                <Text>Role: {item.role}</Text>
+              </View>
+
+              {mutation.isPending &&
+              mutation.variables?.userId === item.id ? (
+                <ActivityIndicator />
+              ) : hideButton ? null : (
+                <TouchableOpacity
+                  style={[
+                    styles.button,
+                    {
+                      backgroundColor:
+                        item.role === "OPERATOR"
+                          ? "#D32F2F"
+                          : "#4CAF50",
+                    },
+                  ]}
+                  onPress={() =>
+                    confirmChangeRole(item.id, item.role)
+                  }
+                >
+                  <Text style={styles.buttonText}>
+                    {item.role === "OPERATOR"
+                      ? "Demote"
+                      : "Promote"}
+                  </Text>
+                </TouchableOpacity>
+              )}
+            </View>
+          );
+        }}
       />
     </View>
-  )
+  );
 }
-
 const styles = StyleSheet.create({
   container: { flex: 1, padding: 16, backgroundColor: "#fff" },
   center: { flex: 1, justifyContent: "center", alignItems: "center" },
