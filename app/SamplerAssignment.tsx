@@ -1,13 +1,25 @@
-import {ActivityIndicator, Alert, FlatList, Pressable, StyleSheet, Text, TextInput, View} from "react-native";
-import {useInfiniteQuery, useMutation, useQueryClient} from "@tanstack/react-query";
+import {
+  ActivityIndicator,
+  Alert,
+  FlatList,
+  Pressable,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View
+} from "react-native";
+import {useInfiniteQuery, useMutation, useQuery, useQueryClient} from "@tanstack/react-query";
 import {SamplerInterface, SamplersPage} from "@/src/interfaces";
-import {QueryDocumentSnapshot} from "firebase/firestore";
+import {doc, getDoc, QueryDocumentSnapshot} from "firebase/firestore";
 import {DocumentData} from "@firebase/firestore";
 import {fetchSamplersPage} from "@/src/queries/samplers";
 import {useMemo, useState} from "react";
 import {SafeAreaView} from "react-native-safe-area-context";
 import {addSamplerToUser} from "@/src/queries/users";
 import {useAuth} from "@/context/AuthContext";
+import {router} from "expo-router";
+import {db} from "@/firebase.config";
 
 export default function SamplerAssignment() {
   const {user, userDoc, loading} = useAuth();
@@ -32,6 +44,10 @@ export default function SamplerAssignment() {
     initialPageParam: null,
     getNextPageParam: (lastPage) => lastPage.lastDoc,
   });
+
+
+
+
 
   const mutation = useMutation({
     mutationFn:({
@@ -89,6 +105,10 @@ export default function SamplerAssignment() {
       </SafeAreaView>
     );
   }
+  if(userDoc?.role !== "ADMIN"){
+    router.push("/(tabs)/WaterSamplerList");
+    return;
+  }
 
   if (error) {
     return (
@@ -96,6 +116,21 @@ export default function SamplerAssignment() {
         <Text>Failed to load samplers</Text>
       </SafeAreaView>
     );
+  }
+
+  const confirmAssign = (userId: string, samplerId: string) => {
+    Alert.alert("Confirm Assignment", "Are you sure you want to assign this sampler to this user?",[
+      {
+        text: "Cancel",
+        style: "cancel",
+      },
+      {
+        text: "Confirm",
+        onPress: () => {
+          mutation.mutate({userId, samplerId});
+        }
+      }
+    ])
   }
 
   return (
@@ -130,15 +165,39 @@ export default function SamplerAssignment() {
           ListFooterComponent={
             isFetchingNextPage ? <ActivityIndicator /> : null
           }
-          renderItem={({ item }) => (
-            <View style={styles.row}>
-              <View style={{flex:1}}>
-                <Text style={styles.name}>{item.name}</Text>
-                <Text style={styles.label}>Address</Text>
-                <Text>{item.address}</Text>
+          renderItem={({ item }) => {
+            const userSamplers = [] as string[];
+            const status = userSamplers.find(userSampler => userSampler === item.id)!==undefined;
+            return (
+              <View style={styles.row}>
+                <View style={{flex:1}}>
+                  <Text style={styles.name}>{item.name}</Text>
+                  <Text style={styles.label}>Address</Text>
+                  <Text>{item.address}</Text>
+
+                </View>
+                {
+                  (
+                    <TouchableOpacity
+                      style={[
+                        styles.button,
+                        {
+                          backgroundColor:
+                            status
+                              ? "#D32F2F"
+                              : "#4CAF50",
+                        },
+                      ]}
+                      onPress={()=>{}}
+                    >
+                      <Text>{status? "Unassign" : "Assign"}</Text>
+                    </TouchableOpacity>
+                  )
+                }
+
               </View>
-            </View>
-          )}
+            )
+          }}
         />
       </View>
     </>

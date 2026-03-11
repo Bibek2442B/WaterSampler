@@ -9,7 +9,7 @@ import {
   StyleSheet,
   TextInput,
 } from "react-native";
-import { Redirect } from "expo-router";
+import {Redirect, UnknownInputParams} from "expo-router";
 import { useAuth } from "@/context/AuthContext";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { router } from "expo-router";
@@ -182,7 +182,16 @@ export default function UserAdminPage() {
 
           return (
             <View style={styles.row}>
-              <TouchableOpacity  style={{ flex: 1 }} onPress={()=>{router.push('/SamplerAssignment')}}>
+              <TouchableOpacity
+                style={{ flex: 1 }}
+                onPress={()=>{
+                  router.push({
+                    pathname: '/SamplerAssignment',
+                    params:{employeeId: item.id}
+                  })
+                  }
+                }
+              >
                 <View style={{ flex: 1 }}>
                   <Text style={styles.name}>
                     {item.name || "(No name)"}

@@ -5,7 +5,7 @@ import {
   query,
   updateDoc,
   doc,
-  arrayUnion,
+  arrayUnion, arrayRemove,
 } from "firebase/firestore";
 import { db } from "@/firebase.config";
 
@@ -50,4 +50,9 @@ export async function updateUserRole(
 export async function addSamplerToUser(userId: string, samplerId: string) {
   const ref = doc(db,"users", userId);
   await updateDoc(ref, {samplers: arrayUnion(samplerId)});
+}
+
+export async function removeSamplerFromUser(userId: string, samplerId: string) {
+  const ref = doc(db,"users", userId);
+  await updateDoc(ref, {samplers: arrayRemove(samplerId)});
 }
