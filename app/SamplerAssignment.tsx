@@ -16,23 +16,17 @@ import {DocumentData} from "@firebase/firestore";
 import {fetchSamplersPage} from "@/src/queries/samplers";
 import {useMemo, useState} from "react";
 import {SafeAreaView} from "react-native-safe-area-context";
-import {addSamplerToUser} from "@/src/queries/users";
+import {addSamplerToUser, removeSamplerFromUser} from "@/src/queries/users";
 import {useAuth} from "@/context/AuthContext";
-import {router} from "expo-router";
+import {router, useLocalSearchParams} from "expo-router";
 import {db} from "@/firebase.config";
 
 export default function SamplerAssignment() {
+  const {employeeId} = useLocalSearchParams() as {employeeId: string};
   const {user, userDoc, loading} = useAuth();
   const queryClient = useQueryClient();
   const [searchText, setSearchText] = useState("");
-  const {
-    data,
-    isLoading,
-    isFetchingNextPage,
-    fetchNextPage,
-    hasNextPage,
-    error,
-  } = useInfiniteQuery<
+  const waterSamplers = useInfiniteQuery<
     SamplersPage,
     Error,
     SamplersPage,
@@ -45,9 +39,22 @@ export default function SamplerAssignment() {
     getNextPageParam: (lastPage) => lastPage.lastDoc,
   });
 
-
-
-
+  const employee = useQuery({
+    queryKey: ["employee", employeeId],
+    queryFn: async () => {
+      const docRef = doc(db, "users", employeeId);
+      const docSnap = await getDoc(docRef);
+      if (docSnap.exists()) {
+        return {
+          id: docSnap.id,
+          ...docSnap.data()
+        } as DocumentData;
+      } else {
+        throw new Error("Employee not found");
+      }
+    },
+    enabled: !!employeeId,
+  })
 
   const mutation = useMutation({
     mutationFn:({
@@ -58,7 +65,7 @@ export default function SamplerAssignment() {
       samplerId: string
     }) => addSamplerToUser(userId, samplerId),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["waterSamplers"] });
+      queryClient.invalidateQueries({ queryKey: ["employee", employeeId] });
       Alert.alert("Success", "Sampler assigned successfully");
     },
     onError: (error) => {
@@ -66,10 +73,27 @@ export default function SamplerAssignment() {
     },
   })
 
+  const removeMutation = useMutation({
+    mutationFn:({
+      userId,
+      samplerId,
+    }:{
+      userId: string,
+      samplerId: string
+    }) => removeSamplerFromUser(userId, samplerId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["employee", employeeId] });
+      Alert.alert("Success", "Sampler removed successfully");
+    },
+    onError: (error) => {
+      Alert.alert("Error", "Failed to remove sampler.");
+    },
+  })
+
   const samplers = useMemo<SamplerInterface[]>(() => {
     // @ts-ignore
-    return data?.pages.flatMap((page) => page.samplers) ?? [];
-  }, [data]);
+    return waterSamplers.data?.pages.flatMap((page) => page.samplers) ?? [];
+  }, [waterSamplers.data]);
 
   const filteredSamplers = useMemo(() => {
     const q = searchText.trim().toLowerCase();
@@ -98,7 +122,7 @@ export default function SamplerAssignment() {
       .map((x) => x.s);
   }, [samplers, searchText]);
 
-  if (isLoading) {
+  if (waterSamplers.isLoading) {
     return (
       <SafeAreaView style={styles.center}>
         <ActivityIndicator size="large" />
@@ -110,7 +134,7 @@ export default function SamplerAssignment() {
     return;
   }
 
-  if (error) {
+  if (waterSamplers.error) {
     return (
       <SafeAreaView style={styles.center}>
         <Text>Failed to load samplers</Text>
@@ -128,6 +152,20 @@ export default function SamplerAssignment() {
         text: "Confirm",
         onPress: () => {
           mutation.mutate({userId, samplerId});
+        }
+      }
+    ])
+  }
+  const confirmRemove = (userId: string, samplerId: string) => {
+    Alert.alert("Confirm Removal", "Are you sure you want to remove this sampler from this user?",[
+      {
+        text: "Cancel",
+        style: "cancel",
+      },
+      {
+        text: "Confirm",
+        onPress: () => {
+          removeMutation.mutate({userId, samplerId});
         }
       }
     ])
@@ -157,17 +195,17 @@ export default function SamplerAssignment() {
           keyExtractor={(item) => item.id}
           contentContainerStyle={{ paddingVertical: 10 }}
           onEndReached={() => {
-            if (hasNextPage && !isFetchingNextPage) {
-              fetchNextPage();
+            if (waterSamplers.hasNextPage && !waterSamplers.isFetchingNextPage) {
+              waterSamplers.fetchNextPage();
             }
           }}
           onEndReachedThreshold={0.3}
           ListFooterComponent={
-            isFetchingNextPage ? <ActivityIndicator /> : null
+            waterSamplers.isFetchingNextPage ? <ActivityIndicator /> : null
           }
           renderItem={({ item }) => {
-            const userSamplers = [] as string[];
-            const status = userSamplers.find(userSampler => userSampler === item.id)!==undefined;
+            const userSamplers = employee.data?.samplers as string[] || [] as string[];
+            const status =  userSamplers.includes(item.id);
             return (
               <View style={styles.row}>
                 <View style={{flex:1}}>
@@ -188,7 +226,11 @@ export default function SamplerAssignment() {
                               : "#4CAF50",
                         },
                       ]}
-                      onPress={()=>{}}
+                      onPress={status?
+                        ()=>confirmRemove(employeeId, item.id)
+                        :
+                        ()=>confirmAssign(employeeId, item.id)
+                      }
                     >
                       <Text>{status? "Unassign" : "Assign"}</Text>
                     </TouchableOpacity>
