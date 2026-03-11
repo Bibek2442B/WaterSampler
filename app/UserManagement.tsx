@@ -12,6 +12,7 @@ import {
 import { Redirect } from "expo-router";
 import { useAuth } from "@/context/AuthContext";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { router } from "expo-router";
 
 import {
   fetchUsers,
@@ -181,13 +182,16 @@ export default function UserAdminPage() {
 
           return (
             <View style={styles.row}>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.name}>
-                  {item.name || "(No name)"}
-                </Text>
-                <Text>{item.email}</Text>
-                <Text>Role: {item.role}</Text>
-              </View>
+              <TouchableOpacity  style={{ flex: 1 }} onPress={()=>{router.push('/SamplerAssignment')}}>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.name}>
+                    {item.name || "(No name)"}
+                  </Text>
+                  <Text>{item.email}</Text>
+                  <Text>Role: {item.role}</Text>
+                </View>
+              </TouchableOpacity>
+
 
               {mutation.isPending &&
               mutation.variables?.userId === item.id ? (

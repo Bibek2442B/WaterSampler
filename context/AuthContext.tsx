@@ -8,7 +8,7 @@ import {
 } from "firebase/auth";
 import {doc, getDoc, serverTimestamp, setDoc, updateDoc,} from "firebase/firestore";
 import {auth, db} from "@/firebase.config";
-import {AuthContextInterface, UserInterface} from "@/src/interfaces";
+import {AuthContextInterface, SamplerInterface, UserInterface} from "@/src/interfaces";
 import {ActivityIndicator, View} from "react-native";
 
 const AuthContext = createContext<AuthContextInterface | null>(null);
@@ -106,6 +106,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         role: "VIEWER",
         emailVerified: false,
         approvedByAdmin: false,
+        samplers: [] as string[],
         createdAt: serverTimestamp(),
       });
 

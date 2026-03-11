@@ -5,6 +5,7 @@ import {
   query,
   updateDoc,
   doc,
+  arrayUnion,
 } from "firebase/firestore";
 import { db } from "@/firebase.config";
 
@@ -44,4 +45,9 @@ export async function updateUserRole(
 ) {
   const ref = doc(db, "users", userId);
   await updateDoc(ref, { role: newRole });
+}
+
+export async function addSamplerToUser(userId: string, samplerId: string) {
+  const ref = doc(db,"users", userId);
+  await updateDoc(ref, {samplers: arrayUnion(samplerId)});
 }
