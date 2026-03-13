@@ -5,6 +5,7 @@ import {
   query,
   updateDoc,
   doc,
+  arrayUnion, arrayRemove,
 } from "firebase/firestore";
 import { db } from "@/firebase.config";
 
@@ -12,7 +13,7 @@ export interface UsersPage {
   users: UserInterface[];
 }
 
-export type UserRole = "ADMIN" | "OPERATOR" | "USER";
+export type UserRole = "ADMIN" | "OPERATOR" | "VIEWER";
 
 export interface UserInterface {
   id: string;
@@ -44,4 +45,14 @@ export async function updateUserRole(
 ) {
   const ref = doc(db, "users", userId);
   await updateDoc(ref, { role: newRole });
+}
+
+export async function addSamplerToUser(userId: string, samplerId: string) {
+  const ref = doc(db,"users", userId);
+  await updateDoc(ref, {samplers: arrayUnion(samplerId)});
+}
+
+export async function removeSamplerFromUser(userId: string, samplerId: string) {
+  const ref = doc(db,"users", userId);
+  await updateDoc(ref, {samplers: arrayRemove(samplerId)});
 }

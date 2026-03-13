@@ -9,9 +9,10 @@ import {
   StyleSheet,
   TextInput,
 } from "react-native";
-import { Redirect } from "expo-router";
+import {Redirect, UnknownInputParams} from "expo-router";
 import { useAuth } from "@/context/AuthContext";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { router } from "expo-router";
 
 import {
   fetchUsers,
@@ -27,9 +28,8 @@ export default function UserAdminPage() {
 
   const [searchText, setSearchText] = useState("");
   const [roleFilter, setRoleFilter] =
-    useState<"ALL" | "OPERATOR" | "USER">("ALL");
+    useState<"ALL" | "OPERATOR" | "VIEWER">("ALL");
 
-  // Same pattern as WaterSamplersList
   const { data, isLoading, error } = useQuery<
     UsersPage,
     Error
@@ -57,6 +57,27 @@ export default function UserAdminPage() {
     },
   });
 
+  const users: UserInterface[] = data?.users?.filter((u)=>(u.role!=="ADMIN")) ?? [];
+
+  const filteredUsers = useMemo(() => {
+    const q = searchText.trim().toLowerCase();
+    if (!q && roleFilter === "ALL") return users;
+
+    return users.filter((u) => {
+      if (!u.approvedByAdmin) return false;
+
+      const matchesSearch =
+        !q ||
+        u.name?.toLowerCase().includes(q) ||
+        u.email?.toLowerCase().includes(q);
+
+      const matchesRole =
+        roleFilter === "ALL" || u.role === roleFilter;
+
+      return matchesSearch && matchesRole;
+    });
+  }, [users, searchText, roleFilter]);
+
   if (loading || isLoading) {
     return (
       <View style={styles.center}>
@@ -77,27 +98,7 @@ export default function UserAdminPage() {
     return <Redirect href="/(tabs)/WaterSamplerList" />;
   }
 
-  // Just like samplers flattening logic
-  const users: UserInterface[] = data?.users ?? [];
 
-  const filteredUsers = useMemo(() => {
-    const q = searchText.trim().toLowerCase();
-    if (!q && roleFilter === "ALL") return users;
-
-    return users.filter((u) => {
-      if (!u.approvedByAdmin) return false;
-
-      const matchesSearch =
-        !q ||
-        u.name?.toLowerCase().includes(q) ||
-        u.email?.toLowerCase().includes(q);
-
-      const matchesRole =
-        roleFilter === "ALL" || u.role === roleFilter;
-
-      return matchesSearch && matchesRole;
-    });
-  }, [users, searchText, roleFilter]);
 
   const confirmChangeRole = (
     targetId: string,
@@ -125,7 +126,7 @@ export default function UserAdminPage() {
           onPress: () =>
             mutation.mutate({
               userId: targetId,
-              newRole: promote ? "OPERATOR" : "USER",
+              newRole: promote ? "OPERATOR" : "VIEWER",
             }),
         },
       ]
@@ -150,7 +151,7 @@ export default function UserAdminPage() {
               roleFilter === role && styles.filterButtonActive,
             ]}
             onPress={() =>
-              setRoleFilter(role as "ALL" | "OPERATOR" | "USER")
+              setRoleFilter(role as "ALL" | "OPERATOR" | "VIEWER")
             }
           >
             <Text
@@ -181,13 +182,25 @@ export default function UserAdminPage() {
 
           return (
             <View style={styles.row}>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.name}>
-                  {item.name || "(No name)"}
-                </Text>
-                <Text>{item.email}</Text>
-                <Text>Role: {item.role}</Text>
-              </View>
+              <TouchableOpacity
+                style={{ flex: 1 }}
+                onPress={()=>{
+                  router.push({
+                    pathname: '/SamplerAssignment',
+                    params:{employeeId: item.id}
+                  })
+                  }
+                }
+              >
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.name}>
+                    {item.name || "(No name)"}
+                  </Text>
+                  <Text>{item.email}</Text>
+                  <Text>Role: {item.role}</Text>
+                </View>
+              </TouchableOpacity>
+
 
               {mutation.isPending &&
               mutation.variables?.userId === item.id ? (

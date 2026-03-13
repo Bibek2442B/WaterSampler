@@ -2,15 +2,6 @@ import {Timestamp} from "@firebase/firestore";
 import {User} from "firebase/auth";
 import { DocumentData, QueryDocumentSnapshot } from "@firebase/firestore";
 
-export interface UserInterface {
-  id: number;
-  name: string;
-  email: string;
-  role: "ADMIN" | "OPERATOR" | "VIEWER";
-  emailVerified: boolean;
-  approvedByAdmin: boolean;
-  createdAt: Timestamp;
-}
 
 export interface ScheduleInterface {
   scheduledAt: Timestamp,
@@ -28,6 +19,18 @@ export interface SamplerInterface {
   status?: "FREE" | "SCHEDULED" | "TAKING_SAMPLE" | "HAS_SAMPLE" | "ERROR",
   schedule?: ScheduleInterface,
 }
+
+export interface UserInterface {
+  id: string;
+  name: string;
+  email: string;
+  role: "ADMIN" | "OPERATOR" | "VIEWER";
+  emailVerified: boolean;
+  approvedByAdmin: boolean;
+  samplers: string[];
+  createdAt: Timestamp;
+}
+
 
 export interface AuthContextInterface {
   user: User | null;
