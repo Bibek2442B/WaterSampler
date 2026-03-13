@@ -16,10 +16,12 @@ import { fetchSamplersPage } from "@/src/queries/samplers";
 import { SamplerInterface, SamplersPage } from "@/src/interfaces";
 import {QueryDocumentSnapshot} from "firebase/firestore";
 import {DocumentData} from "@firebase/firestore";
+import {useAuth} from "@/context/AuthContext";
 
 export default function WaterSamplersList() {
   const [searchText, setSearchText] = useState("");
   const navigation = useNavigation();
+  const {userDoc} = useAuth();
 
   const {
     data,
@@ -57,8 +59,15 @@ export default function WaterSamplersList() {
   }, []);
 
   const samplers = useMemo<SamplerInterface[]>(() => {
-    // @ts-ignore
-    return data?.pages.flatMap((page) => page.samplers) ?? [];
+    //@ts-ignore
+    const userSamplers= data?.pages.flatMap((page) => page.samplers) ?? [];
+    if(userDoc?.role === "ADMIN"){
+      return userSamplers;
+    }
+    //@ts-ignore
+    return userSamplers.filter((sampler) => userDoc.samplers.includes(sampler?.id ?? ""));
+
+
   }, [data]);
 
   const filteredSamplers = useMemo(() => {
