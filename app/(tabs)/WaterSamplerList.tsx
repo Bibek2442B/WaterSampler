@@ -44,18 +44,21 @@ export default function WaterSamplersList() {
   });
 
   useEffect(() => {
-    navigation.setOptions({
-      headerRight: () => (
-        <Pressable
-          onPress={() => router.push("/AddNewSampler")}
-          style={styles.button}
-        >
-          <Text style={{ color: "#fff", fontWeight: "600" }}>
-            + New Sampler
-          </Text>
-        </Pressable>
-      ),
-    });
+    if(userDoc?.role === "ADMIN"){
+      navigation.setOptions({
+        headerRight: () => (
+          <Pressable
+            onPress={() => router.push("/AddNewSampler")}
+            style={styles.button}
+          >
+            <Text style={{ color: "#fff", fontWeight: "600" }}>
+              + New Sampler
+            </Text>
+          </Pressable>
+        ),
+      });
+    }
+
   }, []);
 
   const samplers = useMemo<SamplerInterface[]>(() => {
